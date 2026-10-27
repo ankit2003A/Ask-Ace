@@ -1,0 +1,20 @@
+# Render Blueprint for the backend. Create it via Render -> New -> Blueprint.
+services:
+  - type: web
+    name: documind-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: LLM_API_KEY
+        sync: false          # paste your Groq/Gemini key in the Render dashboard
+      - key: LLM_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: LLM_MODEL
+        value: llama-3.3-70b-versatile
+      - key: CORS_ORIGINS
+        sync: false          # your Vercel URL, e.g. https://documind.vercel.app
