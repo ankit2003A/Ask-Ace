@@ -26,8 +26,12 @@ export default function AuthForm({ onSuccess }) {
   return (
     <main className="auth">
       <form className="auth-card" onSubmit={submit}>
-        <h1>DocuMind AI</h1>
-        <p className="muted">Ask questions about your PDFs and get answers with page citations.</p>
+        <h1>
+          Ask <span className="amp">&amp;</span> Ace
+        </h1>
+        <p className="muted">
+          Bring your PDFs to life. Ask them anything, then let them quiz you.
+        </p>
         <label>
           Email
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />

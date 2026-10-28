@@ -49,5 +49,26 @@ class VectorStore:
             })
         return hits
 
+    def document_chunks(self, document_id: int, user_id: int) -> list[dict]:
+        """Every chunk of one document, in reading order.
+
+        Used by exam generation, which needs coverage of the whole document
+        rather than the nearest neighbours of a single query.
+        """
+        res = self.collection.get(
+            where={"$and": [{"user_id": user_id}, {"document_id": document_id}]},
+            include=["documents", "metadatas"],
+        )
+        chunks = []
+        for cid, text, meta in zip(res["ids"], res["documents"], res["metadatas"]):
+            # Ids are "<document_id>:<chunk index>"; the suffix is the order.
+            try:
+                index = int(str(cid).split(":")[-1])
+            except ValueError:
+                index = 0
+            chunks.append({"index": index, "text": text, "page": meta["page"]})
+        chunks.sort(key=lambda c: c["index"])
+        return chunks
+
     def delete_document(self, document_id: int) -> None:
         self.collection.delete(where={"document_id": document_id})

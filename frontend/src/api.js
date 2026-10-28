@@ -51,6 +51,16 @@ export const api = {
   removeDocument: (id) => request(`/documents/${id}`, { method: "DELETE" }),
   ask: (question, documentId) =>
     request("/ask", { method: "POST", json: { question, document_id: documentId ?? null } }),
+  exams: () => request("/exams"),
+  // Generation calls the model for a whole test, so this can take a minute.
+  createExam: (documentId, { count, type, difficulty }) =>
+    request("/exams", {
+      method: "POST",
+      json: { document_id: documentId, count, question_type: type, difficulty },
+    }),
+  exam: (id) => request(`/exams/${id}`),
+  submitAttempt: (id, responses) => request(`/exams/${id}/attempt`, { method: "POST", json: { responses } }),
+  removeExam: (id) => request(`/exams/${id}`, { method: "DELETE" }),
   history: () => request("/history"),
   clearHistory: () => request("/history", { method: "DELETE" }),
 };

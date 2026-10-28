@@ -5,12 +5,16 @@ LLM. Run it after starting the backend (and after every deploy):
     python scripts/smoke_test.py http://localhost:8000
 
 It prints the retrieval distance for an on-topic and an off-topic question so
-you can tune MAX_DISTANCE for the embedding model you actually use.
+you can tune MAX_DISTANCE for the embedding model you actually use, then
+generates a practice test from the same document and marks an attempt.
 """
 import sys
 import uuid
 
 import httpx
+
+# Answers can contain characters the Windows console codepage cannot encode.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8000").rstrip("/")
 
@@ -73,5 +77,41 @@ with httpx.Client(base_url=BASE, timeout=120) as c:
     if off["sources"]:
         print("  NOTE: off-topic text passed the distance filter. Lower MAX_DISTANCE below the "
               "off-topic distance above and above the on-topic one, then re-run.")
+
+    doc_id = c.get("/documents").json()[0]["id"]
+    r = c.post("/exams", json={"document_id": doc_id, "count": 5,
+                               "question_type": "mcq", "difficulty": "medium"},
+               timeout=240)
+    check(r.status_code == 201, f"generate a test (real LLM): HTTP {r.status_code} {r.text[:200]}")
+    exam = r.json()
+    print(f"  asked for {exam['requested']}, kept {len(exam['questions'])}, "
+          f"discarded {exam['discarded']}, capped by document: {exam['limited_by_document']}")
+    for q in exam["questions"]:
+        print(f"  [{q['position'] + 1}] {q['prompt']}")
+        for option in q["options"] or []:
+            print("       -", option)
+
+    leaked = any(k in q for q in exam["questions"] for k in ("answer", "explanation"))
+    check(not leaked, "the answer key is not sent to the client")
+    check(all(q["options"] for q in exam["questions"]), "every mcq came back with options")
+
+    # Answer with the first option throughout: the point is that marking works,
+    # not that the guesses are right.
+    responses = [{"question_id": q["id"], "answer": (q["options"] or [""])[0]}
+                 for q in exam["questions"]]
+    r = c.post(f"/exams/{exam['id']}/attempt", json={"responses": responses})
+    check(r.status_code == 200, "submit an attempt")
+    graded = r.json()
+    print(f"  scored {graded['score']}/{graded['total']}")
+    for res in graded["results"]:
+        print(f"  {'OK' if res['correct'] else 'XX'} [{res['position'] + 1}] "
+              f"key={res['correct_answer']!r} page={res['page']}")
+    check(graded["total"] == len(exam["questions"]), "every question was marked")
+    check(all(res["correct_answer"] for res in graded["results"]),
+          "the key comes back with the marked result")
+    check(all(res["page"] for res in graded["results"]),
+          "every question cites a page to revise")
+
+    check(c.delete(f"/exams/{exam['id']}").status_code == 204, "delete the test")
 
 print("\nSmoke test finished.")

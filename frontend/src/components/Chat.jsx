@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 
 // Turn "[1]" markers in an answer into small clickable chips.
+// Some models emit fullwidth brackets ("【1】"), so accept those too.
 function Answer({ text, sources, onPick }) {
-  const parts = text.split(/(\[\d+\])/g);
+  const parts = text.split(/([[【]\d+[\]】])/g);
   return (
     <p>
       {parts.map((part, i) => {
-        const m = part.match(/^\[(\d+)\]$/);
+        const m = part.match(/^[[【](\d+)[\]】]$/);
         if (m && sources.some((s) => s.index === Number(m[1]))) {
           return (
             <button key={i} className="chip" onClick={() => onPick(Number(m[1]))}>
@@ -44,7 +45,7 @@ function Message({ m }) {
   );
 }
 
-export default function Chat({ messages, setMessages, scope, hasDocs, pageError, guard }) {
+export default function Chat({ messages, setMessages, scope, hasDocs, pageError, guard, handoff, onDismissHandoff }) {
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -54,10 +55,11 @@ export default function Chat({ messages, setMessages, scope, hasDocs, pageError,
     end.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy]);
 
+
   async function send(e) {
     e.preventDefault();
     const q = question.trim();
-    if (q.length < 3 || busy) return;
+    if (!q || busy) return;
     setError("");
     setQuestion("");
     setMessages((m) => [...m, { role: "user", content: q }]);
@@ -89,6 +91,32 @@ export default function Chat({ messages, setMessages, scope, hasDocs, pageError,
         {messages.length > 0 && <button className="link" onClick={clear}>Clear history</button>}
       </header>
 
+      {handoff?.ok && (
+        <div className="banner" role="status" style={{ margin: "1rem 1.25rem 0" }}>
+          <span>
+            {handoff.page
+              ? <>Revising <strong>page {handoff.page}</strong> of <strong>{handoff.filename}</strong> after your test.</>
+              : <>Brought over from exam prep: <strong>{handoff.filename}</strong></>}
+          </span>
+          {/* One click to the obvious question, rather than an empty box. */}
+          {handoff.page && (
+            <button className="link" onClick={() => setQuestion(`Explain what page ${handoff.page} covers.`)}>
+              Ask about page {handoff.page}
+            </button>
+          )}
+          <button className="link" onClick={onDismissHandoff}>Dismiss</button>
+        </div>
+      )}
+      {handoff && !handoff.ok && (
+        <div className="banner warn" role="alert" style={{ margin: "1rem 1.25rem 0" }}>
+          <span>
+            That document couldn&apos;t be found — it may have been deleted. Pick one from the
+            sidebar instead.
+          </span>
+          <button className="link" onClick={onDismissHandoff}>Dismiss</button>
+        </div>
+      )}
+
       <div className="thread" aria-live="polite">
         {messages.length === 0 && (
           <p className="empty">
@@ -105,11 +133,11 @@ export default function Chat({ messages, setMessages, scope, hasDocs, pageError,
         <input
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Ask about your documents…"
+          placeholder="Ask your PDF anything…"
           maxLength={1000}
           aria-label="Question"
         />
-        <button className="primary" disabled={busy || question.trim().length < 3}>Ask</button>
+        <button className="primary" disabled={busy || !question.trim()}>Ask</button>
       </form>
     </section>
   );

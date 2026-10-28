@@ -31,5 +31,39 @@ class TokenOut(BaseModel):
 
 
 class AskIn(BaseModel):
-    question: str = Field(min_length=3, max_length=1000)
+    # 1, not 3: "hi" is a legitimate message and gets a friendly reply.
+    question: str = Field(min_length=1, max_length=1000)
     document_id: int | None = None
+
+
+class ExamIn(BaseModel):
+    document_id: int
+    count: int = Field(default=10, ge=1, le=30)
+    question_type: str = "mcq"
+    difficulty: str = "mixed"
+
+    @field_validator("question_type")
+    @classmethod
+    def known_type(cls, v: str) -> str:
+        v = v.strip().lower()
+        if v not in ("mcq", "truefalse", "short", "mixed"):
+            raise ValueError("question_type must be mcq, truefalse, short or mixed")
+        return v
+
+    @field_validator("difficulty")
+    @classmethod
+    def known_difficulty(cls, v: str) -> str:
+        v = v.strip().lower()
+        if v not in ("easy", "medium", "hard", "mixed"):
+            raise ValueError("difficulty must be easy, medium, hard or mixed")
+        return v
+
+
+class ResponseIn(BaseModel):
+    question_id: int
+    answer: str = Field(default="", max_length=500)
+
+
+class AttemptIn(BaseModel):
+    # Generous ceiling: one entry per question, and exams cap at 30.
+    responses: list[ResponseIn] = Field(default_factory=list, max_length=60)

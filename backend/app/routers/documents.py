@@ -1,9 +1,13 @@
+import logging
+import time
+
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
 
 from app.deps import get_current_user
 from app.services.ingest import IngestError, build_chunks, extract_pages
 
 router = APIRouter(prefix="/documents", tags=["documents"])
+log = logging.getLogger("documind")
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -22,13 +26,24 @@ def upload_document(file: UploadFile, request: Request,
     if not filename.lower().endswith(".pdf"):
         raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Only PDF files are supported")
 
+    started = time.perf_counter()
     try:
         pages = extract_pages(data, s.max_pages)
         chunks = build_chunks(pages, s.chunk_size, s.chunk_overlap)
     except IngestError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc))
+    extracted = time.perf_counter()
 
     embeddings = state.embedder.embed([c.text for c in chunks])
+    embedded = time.perf_counter()
+    # Indexing is the slowest thing the app does; log where the time went so a
+    # slow upload can be diagnosed without guessing.
+    log.info(
+        "indexed %s: %d pages, %d chunks, batch_size=%s | extract %.2fs, embed %.2fs",
+        filename, len(pages), len(chunks),
+        getattr(state.embedder, "batch_size", "n/a"),
+        extracted - started, embedded - extracted,
+    )
 
     with state.db.session() as c:
         cur = c.execute(

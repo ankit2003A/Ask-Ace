@@ -33,3 +33,29 @@ def test_chunks_keep_page_numbers():
 def test_page_limit():
     with pytest.raises(IngestError):
         extract_pages(make_pdf(["a b c"] * 3), max_pages=2)
+
+
+def test_embedder_passes_the_configured_batch_size():
+    """batch_size is the difference between 5 seconds and 19; make sure it
+    actually reaches fastembed rather than silently defaulting."""
+    from app.services.embeddings import FastEmbedder
+
+    class FakeModel:
+        def __init__(self):
+            self.kwargs = None
+
+        def embed(self, texts, **kwargs):
+            self.kwargs = kwargs
+            # fastembed yields numpy arrays, so mimic .tolist().
+            return [FakeVector() for _ in texts]
+
+    class FakeVector:
+        def tolist(self):
+            return [0.1, 0.2]
+
+    embedder = FastEmbedder("some-model", batch_size=1)
+    embedder._model = FakeModel()  # skip the real model download
+    out = embedder.embed(["a", "b"])
+
+    assert embedder._model.kwargs == {"batch_size": 1}
+    assert out == [[0.1, 0.2], [0.1, 0.2]]

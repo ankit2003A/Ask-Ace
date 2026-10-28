@@ -6,3 +6,6 @@ data/
 node_modules/
 dist/
 .DS_Store
+
+# Personal editor settings
+.vscode/

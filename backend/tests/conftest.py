@@ -32,13 +32,16 @@ class FakeEmbedder:
 class FakeLLM:
     def __init__(self):
         self.calls = []
+        self.options = []
         self.error = None
+        self.answer = "Photosynthesis converts light into chemical energy [1]."
 
-    def complete(self, messages):
+    def complete(self, messages, **options):
         self.calls.append(messages)
+        self.options.append(options)
         if self.error:
             raise self.error
-        return "Photosynthesis converts light into chemical energy [1]."
+        return self.answer
 
 
 def make_pdf(pages: list[str]) -> bytes:
