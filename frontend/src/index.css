@@ -618,6 +618,25 @@ a.primary, a.btn-ghost { display: inline-flex; align-items: center; }
 .doc.active { background: var(--accent-soft); border-color: rgba(59, 130, 246, 0.3); font-weight: 600; }
 .doc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .logout { margin-top: auto; }
+/* Indexing progress bar */
+.upload-progress { margin-top: 0.75rem; }
+.upload-progress-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--muted);
+}
+.upload-progress-head strong {
+  font-family: var(--font-display); font-size: 0.95rem; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.upload-progress-track {
+  height: 8px; border-radius: 999px; overflow: hidden;
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line);
+}
+.upload-progress-fill {
+  height: 100%; border-radius: inherit; background: var(--grad-action);
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+  transition: width 0.25s ease-out;
+}
 .indexed {
   margin: 0.6rem 0 0; color: #a7f3d0; font-size: 0.82rem; line-height: 1.5;
   background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3);

@@ -1,20 +1,36 @@
+import json
 import logging
 import time
 
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
+from fastapi.responses import StreamingResponse
 
 from app.deps import get_current_user
-from app.services.ingest import IngestError, build_chunks, extract_pages
+from app.services.ingest import IngestError, build_chunks, read_pages
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 log = logging.getLogger("documind")
 
+# Progress events while embedding. Embedding is the slow part, but each call
+# has a small fixed cost, so report about this many times rather than per chunk.
+EMBED_UPDATES = 50
+
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-def upload_document(file: UploadFile, request: Request,
-                          user: dict = Depends(get_current_user)):
+def upload_document(file: UploadFile, request: Request, stream: bool = False,
+                    user: dict = Depends(get_current_user)):
+    """Upload and index a PDF.
+
+    By default this answers once, with the indexed document. With
+    `?stream=true` it instead streams newline-delimited JSON progress events
+    while it works — pages read, chunks embedded, saving — ending in a `done`
+    event carrying the document, or an `error` event. That is what lets the UI
+    show a real percentage rather than a guess.
+    """
     state = request.app.state
     s = state.settings
+    # Everything that can be rejected up front is, so these keep their proper
+    # status codes even in streaming mode.
     limit = s.max_upload_mb * 1024 * 1024
     data = file.file.read(limit + 1)
     if len(data) > limit:
@@ -26,16 +42,53 @@ def upload_document(file: UploadFile, request: Request,
     if not filename.lower().endswith(".pdf"):
         raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Only PDF files are supported")
 
-    started = time.perf_counter()
+    steps = _index(state, user, filename, data)
+
+    if stream:
+        return StreamingResponse(
+            _ndjson(steps, filename),
+            media_type="application/x-ndjson",
+            # Ask proxies not to hold the events back until the end.
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
     try:
-        pages = extract_pages(data, s.max_pages)
-        chunks = build_chunks(pages, s.chunk_size, s.chunk_overlap)
+        for step in steps:
+            if step["stage"] == "done":
+                return step["document"]
     except IngestError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc))
+    raise RuntimeError("indexing finished without producing a document")
+
+
+def _index(state, user: dict, filename: str, data: bytes):
+    """Index a PDF, yielding a progress event after each unit of work."""
+    s = state.settings
+    started = time.perf_counter()
+
+    reading = read_pages(data, s.max_pages)
+    while True:
+        try:
+            done, total = next(reading)
+        except StopIteration as finished:
+            pages = finished.value
+            break
+        yield {"stage": "reading", "done": done, "total": total}
+
+    chunks = build_chunks(pages, s.chunk_size, s.chunk_overlap)
     extracted = time.perf_counter()
 
-    embeddings = state.embedder.embed([c.text for c in chunks])
+    # Embedding in slices gives identical vectors (each text is embedded on its
+    # own anyway; see Settings.embedding_batch_size) and lets us report progress.
+    texts = [c.text for c in chunks]
+    step = max(1, len(texts) // EMBED_UPDATES)
+    embeddings = []
+    yield {"stage": "embedding", "done": 0, "total": len(texts)}
+    for start in range(0, len(texts), step):
+        embeddings += state.embedder.embed(texts[start:start + step])
+        yield {"stage": "embedding", "done": len(embeddings), "total": len(texts)}
     embedded = time.perf_counter()
+
     # Indexing is the slowest thing the app does; log where the time went so a
     # slow upload can be diagnosed without guessing.
     log.info(
@@ -45,6 +98,7 @@ def upload_document(file: UploadFile, request: Request,
         extracted - started, embedded - extracted,
     )
 
+    yield {"stage": "saving"}
     with state.db.session() as c:
         cur = c.execute(
             "INSERT INTO documents (user_id, filename, pages, chunks) VALUES (?, ?, ?, ?)",
@@ -56,7 +110,26 @@ def upload_document(file: UploadFile, request: Request,
         except Exception:
             state.store.delete_document(doc_id)
             raise
-    return {"id": doc_id, "filename": filename, "pages": len(pages), "chunks": len(chunks)}
+    yield {"stage": "done", "document": {
+        "id": doc_id, "filename": filename, "pages": len(pages), "chunks": len(chunks),
+    }}
+
+
+def _ndjson(steps, filename: str):
+    """Serialise progress events, turning failures into a final error event.
+
+    The 200 status is already sent once streaming starts, so a problem found
+    part-way through (a scanned PDF, say) has to travel as an event instead.
+    """
+    try:
+        for step in steps:
+            yield json.dumps(step) + "\n"
+    except IngestError as exc:
+        yield json.dumps({"stage": "error", "status": 422, "detail": str(exc)}) + "\n"
+    except Exception:
+        log.exception("indexing %s failed", filename)
+        yield json.dumps({"stage": "error", "status": 500,
+                          "detail": "Indexing failed on the server."}) + "\n"
 
 
 @router.get("")

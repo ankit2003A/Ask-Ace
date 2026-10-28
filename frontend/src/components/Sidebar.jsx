@@ -1,39 +1,34 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../api";
-import { seconds, useElapsed } from "../useElapsed";
+import { advance, api } from "../api";
+import UploadProgress from "./UploadProgress.jsx";
 
 export default function Sidebar({ docs, scope, setScope, onUploaded, onRemoved, onLogout, guard }) {
   const navigate = useNavigate();
   const input = useRef(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  /* Indexing a long PDF takes seconds with nothing to look at, so show the
-     clock. It runs from the moment the file is sent to the moment the
-     document is added to the list below. */
-  const [startedAt, setStartedAt] = useState(null);
-  const [took, setTook] = useState(null);
-  const elapsed = useElapsed(startedAt);
+  const [progress, setProgress] = useState(null); // {label, percent} while indexing
+  const [ready, setReady] = useState(null); // filename of the last upload
 
   async function upload(e) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
     setError("");
-    setTook(null);
-    const begun = Date.now();
-    setStartedAt(begun);
+    setReady(null);
+    setProgress({ label: "Uploading", percent: 0 });
     setBusy(true);
     try {
-      const doc = await api.upload(file);
+      const doc = await api.upload(file, (p) => setProgress(advance(p)));
       onUploaded(doc);
-      setTook({ name: doc.filename, value: (Date.now() - begun) / 1000 });
+      setReady(doc.filename);
     } catch (err) {
       if (err.status === 401) guard(err);
       else setError(err.message);
     } finally {
       setBusy(false);
-      setStartedAt(null);
+      setProgress(null);
     }
   }
 
@@ -51,16 +46,12 @@ export default function Sidebar({ docs, scope, setScope, onUploaded, onRemoved, 
       <div className="brand">Ask your PDF</div>
       <input ref={input} type="file" accept="application/pdf,.pdf" hidden onChange={upload} />
       <button className="primary" onClick={() => input.current.click()} disabled={busy}>
-        {busy ? `Indexing… ${seconds(elapsed)}` : "Upload PDF"}
+        {busy ? "Indexing…" : "Upload PDF"}
       </button>
-      {busy && (
-        <p className="muted small" role="status">
-          Reading pages and building the index. Stays on this page.
-        </p>
-      )}
-      {took && !busy && (
+      {progress && <UploadProgress progress={progress} />}
+      {ready && !busy && (
         <p className="indexed" role="status">
-          ✓ Indexed <strong>{took.name}</strong> in {seconds(took.value)}
+          ✓ <strong>{ready}</strong> is ready
         </p>
       )}
       {error && <p className="error" role="alert">{error}</p>}

@@ -21,21 +21,28 @@ class Chunk:
     index: int  # position within the document
 
 
-def extract_pages(data: bytes, max_pages: int) -> list[tuple[int, str]]:
-    """Return [(page_number, text)] for pages that contain text."""
+def read_pages(data: bytes, max_pages: int):
+    """Extract text page by page, yielding (page_number, total_pages) as it goes.
+
+    The generator's return value is [(page_number, text)] for pages that
+    contain text, so callers that want progress can `yield from` it and still
+    receive the pages. Use `extract_pages` when progress doesn't matter.
+    """
     if not data.startswith(b"%PDF"):
         raise IngestError("File is not a valid PDF.")
     try:
         reader = PdfReader(io.BytesIO(data))
         if reader.is_encrypted:
             raise IngestError("Encrypted PDFs are not supported.")
-        if len(reader.pages) > max_pages:
+        total = len(reader.pages)
+        if total > max_pages:
             raise IngestError(f"PDF has too many pages (limit {max_pages}).")
         pages = []
         for number, page in enumerate(reader.pages, start=1):
             text = " ".join((page.extract_text() or "").split())
             if text:
                 pages.append((number, text))
+            yield number, total
     except IngestError:
         raise
     except (PdfReadError, ValueError, KeyError, OSError) as exc:
@@ -45,6 +52,16 @@ def extract_pages(data: bytes, max_pages: int) -> list[tuple[int, str]]:
             "No extractable text found. This looks like a scanned PDF; OCR is not supported."
         )
     return pages
+
+
+def extract_pages(data: bytes, max_pages: int) -> list[tuple[int, str]]:
+    """Return [(page_number, text)] for pages that contain text."""
+    steps = read_pages(data, max_pages)
+    while True:
+        try:
+            next(steps)
+        except StopIteration as finished:
+            return finished.value
 
 
 def split_text(text: str, size: int, overlap: int) -> list[str]:

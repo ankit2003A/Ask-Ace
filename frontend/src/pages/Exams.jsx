@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { api } from "../api";
-import { seconds, useElapsed } from "../useElapsed";
+import { advance, api } from "../api";
+import UploadProgress from "../components/UploadProgress.jsx";
 import ExamPlayer from "../components/ExamPlayer.jsx";
 import SiteFooter from "../components/SiteFooter.jsx";
 
@@ -18,9 +18,8 @@ export default function Exams({ onLogout }) {
   const [handoff, setHandoff] = useState(null); // {ok, filename} | {ok:false}
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [startedAt, setStartedAt] = useState(null);
-  const [took, setTook] = useState(null);
-  const elapsed = useElapsed(startedAt);
+  const [progress, setProgress] = useState(null); // {label, percent} while indexing
+  const [ready, setReady] = useState(null); // filename of the last upload
   const [generating, setGenerating] = useState(false);
   const [notice, setNotice] = useState("");
   const [exam, setExam] = useState(null); // the test being taken
@@ -68,21 +67,20 @@ export default function Exams({ onLogout }) {
     e.target.value = "";
     if (!file) return;
     setError("");
-    setTook(null);
-    const begun = Date.now();
-    setStartedAt(begun);
+    setReady(null);
+    setProgress({ label: "Uploading", percent: 0 });
     setBusy(true);
     try {
-      const doc = await api.upload(file);
+      const doc = await api.upload(file, (p) => setProgress(advance(p)));
       setDocs((d) => [doc, ...d]);
       setSelected(doc.id);
-      setTook({ name: doc.filename, value: (Date.now() - begun) / 1000 });
+      setReady(doc.filename);
     } catch (err) {
       guard(err);
       setError(err.message);
     } finally {
       setBusy(false);
-      setStartedAt(null);
+      setProgress(null);
     }
   }
 
@@ -235,11 +233,12 @@ export default function Exams({ onLogout }) {
               onClick={() => fileInput.current.click()}
               disabled={busy}
             >
-              {busy ? `Indexing… ${seconds(elapsed)}` : "Upload another PDF"}
+              {busy ? "Indexing…" : "Upload another PDF"}
             </button>
-            {took && !busy && (
+            {progress && <UploadProgress progress={progress} />}
+            {ready && !busy && (
               <p className="indexed" role="status">
-                ✓ Indexed <strong>{took.name}</strong> in {seconds(took.value)}
+                ✓ <strong>{ready}</strong> is ready
               </p>
             )}
 

@@ -82,8 +82,8 @@ The name is the product: **Ask** is one half, **Ace** is the other, and one uplo
 </tr>
 </table>
 
-**Also:** one account for both modules · move a PDF between them without re-uploading · live
-indexing timer · a 143-page PDF indexes in about 6 seconds · dark UI.
+**Also:** one account for both modules · move a PDF between them without re-uploading ·
+a 143-page PDF indexes in about 6 seconds · dark UI.
 
 <br>
 
