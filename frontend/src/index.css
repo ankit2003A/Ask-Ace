@@ -79,12 +79,12 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .glow-field::after { right: -220px; top: 15%; width: 680px; height: 680px; background: rgba(124, 58, 237, 0.3); }
 
 /* Buttons */
-.primary, .btn-grad {
+.primary {
   background: var(--grad-action); color: #fff; border: 0; border-radius: 999px;
   padding: 0.7rem 1.4rem; font-weight: 600; box-shadow: var(--glow);
   transition: transform 0.2s ease, filter 0.2s ease;
 }
-.primary:hover:not(:disabled), .btn-grad:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
+.primary:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
 .btn-ghost {
   background: var(--panel); color: var(--ink); border: 1px solid var(--line-strong);
   border-radius: 999px; padding: 0.7rem 1.4rem; font-weight: 500;
@@ -484,22 +484,6 @@ a.primary, a.btn-ghost { display: inline-flex; align-items: center; }
 .faq details[open] .faq-mark::after { transform: translateY(-50%) rotate(0deg); }
 .faq details p { margin: 0 0 1.2rem; color: var(--muted); font-size: 0.93rem; line-height: 1.75; max-width: 60ch; }
 
-/* What it is made of */
-.stack-strip {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-  gap: 1rem 2.25rem; padding: 2rem 1.5rem; border-radius: var(--radius-card);
-  border: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent);
-}
-.stack-strip > span { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.14em; }
-.stack-strip ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem 2rem; list-style: none; margin: 0; padding: 0; }
-.stack-strip li {
-  font-family: var(--font-display); font-weight: 700; font-size: 1.15rem;
-  color: var(--ink-soft); opacity: 0.75; transition: opacity 0.2s ease, color 0.2s ease;
-}
-.stack-strip li:hover { color: #93c5fd; }
-.stack-strip li:hover { opacity: 1; }
-
 /* Closing call to action */
 .cta-band {
   position: relative; overflow: hidden; margin-top: 4.5rem; text-align: center;
@@ -696,8 +680,6 @@ a.primary, a.btn-ghost { display: inline-flex; align-items: center; }
   .hub section + section { margin-top: 4rem; }
   .bento { grid-template-columns: 1fr; }
   .bento-card.span-2 { grid-column: span 1; }
-  .stack-strip { gap: 0.9rem 1.4rem; }
-  .stack-strip ul { gap: 0.9rem 1.4rem; }
 }
 
 /* Decoration only: none of it carries meaning, so it all stops here. */
