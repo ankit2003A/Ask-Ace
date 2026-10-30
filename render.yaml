@@ -1,12 +1,13 @@
-# Render Blueprint for the backend. Create it via Render -> New -> Blueprint.
+# Render Blueprint: one free web service serving the app at / and the API at /api.
+# Create it via Render -> New -> Blueprint; the only value to fill in is LLM_API_KEY.
 services:
   - type: web
-    name: documind-api
+    name: ask-and-ace
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     plan: free
-    healthCheckPath: /health
+    healthCheckPath: /api/health
     envVars:
       - key: SECRET_KEY
         generateValue: true
@@ -16,5 +17,3 @@ services:
         value: https://api.groq.com/openai/v1
       - key: LLM_MODEL
         value: openai/gpt-oss-120b
-      - key: CORS_ORIGINS
-        sync: false          # your Vercel URL, e.g. https://documind.vercel.app

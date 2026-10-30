@@ -245,6 +245,7 @@ Ask-Ace/
 ├── backend/                    FastAPI service
 │   ├── app/
 │   │   ├── main.py             app factory, logging, CORS
+│   │   ├── site.py             production: API at /api + built frontend at /
 │   │   ├── config.py           every setting, read from .env
 │   │   ├── db.py               SQLite schema (users, documents, messages, exams, attempts)
 │   │   ├── routers/            auth · documents · chat (/ask) · exams
@@ -264,7 +265,8 @@ Ask-Ace/
 │       └── index.css           the whole design system, plain CSS
 ├── scripts/smoke_test.py       end-to-end check against a live server
 ├── docs/screenshots/
-└── render.yaml                 one-click backend deploy
+├── Dockerfile                  builds the frontend, then one image serves both
+└── render.yaml                 one-click Render deploy
 ```
 
 <br>
@@ -358,16 +360,17 @@ It also prints retrieval distances for an on-topic and an off-topic question. Us
 
 ## ☁️ Deployment
 
-**Backend → Render.** New → Blueprint → select this repo; it reads [`render.yaml`](render.yaml).
-Set `LLM_API_KEY` and `CORS_ORIGINS` (your Vercel URL) in the dashboard.
+The whole app deploys as **one Docker service**: the [`Dockerfile`](Dockerfile) builds the React app,
+and [`app/site.py`](backend/app/site.py) serves it at `/` with the API under `/api`. One URL, no CORS.
 
-**Frontend → Vercel.** Import the repo, set *Root Directory* to `frontend`, and add `VITE_API_URL`
-= your Render URL. [`vercel.json`](frontend/vercel.json) already handles client-side routes.
+**Render.** New → Blueprint → select this repo; it reads [`render.yaml`](render.yaml).
+Paste your Groq key into `LLM_API_KEY` when asked. `SECRET_KEY` is generated for you.
 
-Then run `python scripts/smoke_test.py https://<your-render-url>`.
+Then run `python scripts/smoke_test.py https://<your-app>.onrender.com/api`.
 
-> ⚠️ Render's free disk is wiped on every redeploy and the service sleeps when idle, so accounts and
-> documents can disappear. Use a persistent disk for anything real.
+> ⚠️ On Render's free plan the service sleeps after 15 minutes idle (the first visit then takes
+> about a minute), and the disk is wiped on every restart or redeploy, so accounts and documents
+> can disappear. Use a paid plan with a persistent disk for anything real.
 
 <br>
 

@@ -49,3 +49,6 @@ class Settings(BaseSettings):
 
     # CORS (comma-separated origins)
     cors_origins: str = "http://localhost:5173"
+
+    # Built React app, served by app.site in production (the Docker image sets it).
+    frontend_dir: str = "../frontend/dist"
