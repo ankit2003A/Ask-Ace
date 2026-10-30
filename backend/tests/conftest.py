@@ -62,8 +62,9 @@ def llm():
 
 @pytest.fixture
 def client(tmp_path, llm):
-    settings = Settings(data_dir=str(tmp_path), secret_key="test-secret", max_upload_mb=1,
-                        max_distance=0.7)
+    # _env_file=None: the developer's backend/.env must not change what the tests see.
+    settings = Settings(_env_file=None, data_dir=str(tmp_path), secret_key="test-secret",
+                        max_upload_mb=1, max_distance=0.7)
     app = create_app(settings, embedder=FakeEmbedder(), llm=llm)
     with TestClient(app) as c:
         yield c

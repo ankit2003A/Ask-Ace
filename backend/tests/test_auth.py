@@ -65,7 +65,7 @@ def google_client(tmp_path, llm, client_id="test-client.apps.googleusercontent.c
     from app.main import create_app
     from tests.conftest import FakeEmbedder
 
-    settings = Settings(data_dir=str(tmp_path / "google"), secret_key="test-secret",
+    settings = Settings(_env_file=None, data_dir=str(tmp_path / "google"), secret_key="test-secret",
                         google_client_id=client_id)
     return TestClient(create_app(settings, embedder=FakeEmbedder(), llm=llm))
 
