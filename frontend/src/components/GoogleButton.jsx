@@ -67,9 +67,9 @@ export default function GoogleButton({ onToken, onError }) {
         },
       });
       window.google.accounts.id.renderButton(holder.current, {
-        theme: "filled_black",
+        theme: "outline",
         size: "large",
-        shape: "pill",
+        shape: "rectangular",
         text: "continue_with",
         logo_alignment: "center",
         // Google needs a pixel width; match whatever the card gives us.
@@ -85,10 +85,10 @@ export default function GoogleButton({ onToken, onError }) {
 
   return (
     <div className={ready ? "google-signin is-ready" : "google-signin"}>
+      <div ref={holder} className="google-holder" />
       <div className="or">
-        <span>or</span>
+        <span>OR</span>
       </div>
-      <div ref={holder} />
     </div>
   );
 }

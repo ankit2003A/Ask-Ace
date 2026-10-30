@@ -1,40 +1,37 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import Icon from "../components/Icon.jsx";
 import SiteFooter from "../components/SiteFooter.jsx";
 
 /* The idea the whole page hangs on: a PDF is normally a dead file you scroll
    through. Ask & Ace brings it to life — it answers, shows its sources and
    quizzes you. Every claim below is something the app actually does. */
 
+/* What people bring, in place of a wall of borrowed logos. */
+const WORKS_WITH = [
+  ["book", "Textbooks"],
+  ["fileText", "Lecture notes"],
+  ["grid", "Slide decks"],
+  ["search", "Research papers"],
+  ["bookmark", "Revision guides"],
+  ["settings", "Manuals"],
+];
+
+const WHY = [
+  ["fileText", "Upload Any PDF", "Notes, textbooks or slides. It is read page by page and indexed in seconds."],
+  ["chat", "It Talks Back", "Ask in your own words. Every answer is drawn from your pages and cites them."],
+  ["help", "Writes Smart Exams", "Multiple choice, true/false and short answer — 5 to 30 questions, from the whole document."],
+  ["target", "Revise What Matters", "Your attempt is marked instantly, and every miss points to the page to reread."],
+];
+
 const STEPS = [
-  ["Upload", "Drop in a text-based PDF. It is read page by page and indexed in seconds."],
-  ["Ask", "Question it in your own words. Every answer points to the page it came from."],
-  ["Ace", "Let it quiz you from its own pages — no second upload — and mark your answers."],
-  ["Revise", "Every miss links back to the exact page. Read it, retake, move on."],
+  ["upload", "Upload Your PDF", "Drop in a text-based PDF. It is ready in seconds."],
+  ["chat", "Ask Anything", "Get answers with the exact page each one came from."],
+  ["target", "Ace a Practice Test", "It writes a test from its own pages and marks you."],
+  ["checkCircle", "Revise and Retake", "Read the page you missed, then try again."],
 ];
 
-/* Capability counts, not invented popularity figures. */
-const FACTS = [
-  ["1", "upload, then ask and ace"],
-  ["3", "question types"],
-  ["30", "questions per test, max"],
-  ["100%", "marked server-side"],
-];
-
-const BEFORE = [
-  "You scroll and hope you spot it",
-  "Ctrl+F only finds the exact words",
-  "No way to check what actually stuck",
-  "Before the exam, you re-read all of it",
-];
-
-const AFTER = [
-  "Ask in your own words, get a direct answer",
-  "Every answer shows the page it came from",
-  "It writes a practice test from its own pages",
-  "It marks you and points to the page to revise",
-];
-
-const FEATURES = [
+const TRUST = [
   {
     wide: true,
     icon: "quote",
@@ -54,8 +51,8 @@ const FEATURES = [
     icon: "spread",
     title: "Not just chapter one",
     body:
-      "Tests are drawn from across the whole document, not just the first chapter, so the " +
-      "end of the book gets the same attention as the start.",
+      "Tests are drawn from across the whole document, so the end of the book gets the same " +
+      "attention as the start.",
   },
   {
     icon: "lock",
@@ -104,207 +101,95 @@ const FAQ = [
 ];
 
 export default function Hub() {
+  const { hash } = useLocation();
+
+  // Nav links like /#how land here; the browser won't scroll to them by itself
+  // because the sections only exist once this page has rendered.
+  useEffect(() => {
+    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "smooth" });
+  }, [hash]);
+
   return (
     <>
       <div className="page hub">
         <section className="hero">
           <div className="hero-copy">
-            <span className="badge reveal">✦ Make any PDF smart</span>
-            <h1 className="reveal d1">
-              Bring your PDF
+            <span className="pill-label rise">
+              <Icon name="sparkle" size={14} /> AI for Your PDFs, Reimagined
+            </span>
+            <h1 className="rise d1">
+              Bring Your PDF
               <br />
-              <span className="shine">to life.</span>
+              <span className="title-accent">to Life with AI.</span>
             </h1>
-            <p className="reveal d2">
-              A PDF just sits there. <strong>Ask &amp; Ace</strong> makes it talk back. Ask it
-              anything and it answers with the page it came from. Then it quizzes you, until
-              you know it cold.
+            <p className="rise d2">
+              Upload any PDF and let <strong>Ask &amp; Ace</strong> answer your questions with
+              the exact page, then write and mark practice exams from it in seconds.
             </p>
-            <div className="hero-cta reveal d3">
-              <Link className="primary lg" to="/documents">
-                Bring a PDF to life →
+            <div className="hero-cta rise d3">
+              <Link className="primary lg" to="/documents?signup=1">
+                Start Asking — It&apos;s Free
               </Link>
-              <Link className="btn-ghost lg" to="/exams">
-                Make a practice test
+              <Link className="btn-outline lg" to="/exams">
+                <Icon name="play" size={14} /> Make a Practice Test
               </Link>
             </div>
-            <ul className="ticks reveal d4">
-              <li>It answers, and shows you the page</li>
-              <li>It quizzes you from its own pages</li>
-              <li>It says so when it doesn&apos;t know</li>
+            <ul className="ticks rise d4">
+              <li><Icon name="check" size={15} />No Credit Card</li>
+              <li><Icon name="check" size={15} />Page-Cited Answers</li>
+              <li><Icon name="check" size={15} />Marked Instantly</li>
             </ul>
           </div>
 
-          {/* The PDF waking up: the page itself at the back, its answer in front of
-              it, and the quiz it wrote. Decorative — the same claims are made in
-              words above and below, so it is hidden from screen readers. */}
-          <div className="hero-art reveal d2" aria-hidden="true">
-            <div className="mock-pdf">
-              <div className="pdf-tag">PDF</div>
-              <div className="pdf-voice">
-                <i /><i /><i /><i />
-              </div>
-              <div className="pdf-title" />
-              <div className="pdf-line" />
-              <div className="pdf-line short" />
-              <div className="pdf-line lit" />
-              <div className="pdf-line lit short" />
-              <div className="pdf-line" />
-              <div className="pdf-line" />
-              <div className="pdf-line short" />
-              <div className="pdf-page">page 3</div>
-            </div>
+          <HeroArt />
+        </section>
 
-            <div className="mock mock-chat">
-              <div className="mock-bar">
-                <i /><i /><i />
-                <span>water_cycle.pdf is answering</span>
-              </div>
-              <p className="mock-ask">Why does urbanisation cause flash flooding?</p>
-              <p className="mock-answer">
-                Roads and rooftops stop water soaking into the ground, so more of it runs
-                off the surface <b>1</b>, which raises the risk of flash flooding <b>2</b>.
-              </p>
-              <div className="mock-source">
-                <b>1</b> water_cycle.pdf · page 3
-              </div>
-            </div>
+        <section className="works-with">
+          <p>Works with any text-based PDF</p>
+          <ul>
+            {WORKS_WITH.map(([icon, label]) => (
+              <li key={label}><Icon name={icon} size={22} />{label}</li>
+            ))}
+          </ul>
+        </section>
 
-            <div className="mock mock-quiz">
-              <div className="mock-kind">Your PDF quizzes you · page 2</div>
-              <p className="mock-q">
-                A well drilled into a confined aquifer under pressure is called?
-              </p>
-              <div className="mock-opt">Observation well</div>
-              <div className="mock-opt right">Artesian well ✓</div>
-              <div className="mock-score">
-                <strong>18/20</strong>
-                <span>Revise page 2 →</span>
-              </div>
-            </div>
+        <section id="features" className="center-section">
+          <span className="pill-label"><Icon name="sparkle" size={14} /> Why Ask &amp; Ace?</span>
+          <div className="why-grid">
+            {WHY.map(([icon, title, text]) => (
+              <article className="why-card" key={title}>
+                <span className="orb-icon"><Icon name={icon} size={26} /></span>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </article>
+            ))}
           </div>
         </section>
 
-        <section className="facts">
-          {FACTS.map(([value, label]) => (
-            <div className="fact" key={label}>
-              <strong>{value}</strong>
-              <span>{label}</span>
-            </div>
-          ))}
-        </section>
-
-        <section className="compare-section">
-          <Eyebrow n="01" label="Before and after" />
-          <h2 className="section-title">
-            From a file you scroll to a tutor you{" "}
-            <span className="gradient-text">talk to</span>.
-          </h2>
-          <div className="compare">
-            <article className="compare-card plain">
-              <div className="compare-head">
-                <span className="compare-icon">📄</span>
-                <h3>A plain PDF</h3>
-              </div>
-              <ul>
-                {BEFORE.map((item) => <li key={item}>{item}</li>)}
-              </ul>
-            </article>
-
-            <div className="compare-arrow" aria-hidden="true">→</div>
-
-            <article className="compare-card smart">
-              <div className="compare-head">
-                <span className="compare-icon">✨</span>
-                <h3>
-                  The same PDF on Ask <span className="amp">&amp;</span> Ace
-                </h3>
-              </div>
-              <ul>
-                {AFTER.map((item) => <li key={item}>{item}</li>)}
-              </ul>
-            </article>
-          </div>
-        </section>
-
-        <section className="modules">
-          <Eyebrow n="02" label="Ask, then Ace" />
-          <h2 className="section-title">
-            Two things your PDF can do <span className="gradient-text">now</span>.
-          </h2>
-
-          <div className="module-grid">
-            <article className="card module-card">
-              <div className="card-icon" aria-hidden="true">
-                <Icon name="chat" />
-              </div>
-              <span className="module-tag">Ask</span>
-              <h3>Ask your PDF</h3>
-              <p>
-                Have a conversation with your study material. Ask it to explain, summarise or
-                find something, and it answers from its own pages with the citation attached.
-              </p>
-              <ul>
-                <li>Ask in your own words, not exact keywords</li>
-                <li>Every answer links to the page it came from</li>
-                <li>Says so honestly when the answer isn&apos;t there</li>
-              </ul>
-              <Link className="primary" to="/documents">Ask your PDF →</Link>
-            </article>
-
-            <article className="card module-card">
-              <div className="card-icon alt" aria-hidden="true">
-                <Icon name="check" />
-              </div>
-              <span className="module-tag alt">Ace</span>
-              <h3>Ace your exam</h3>
-              <p>
-                Let the same PDF test you. It writes a practice exam from across all of its
-                pages, marks your answers instantly, and shows you exactly where to revise.
-              </p>
-              <ul>
-                <li>Multiple choice, true / false or short answer</li>
-                <li>5 to 30 questions, at the difficulty you pick</li>
-                <li>Every wrong answer points back to its page</li>
-              </ul>
-              <Link className="btn-ghost" to="/exams">Ace your exam →</Link>
-            </article>
-          </div>
-        </section>
-
-        <section className="flow">
-          <Eyebrow n="03" label="How it works" />
-          <h2 className="section-title">Upload once. Ask. Ace. Repeat.</h2>
-          <p className="section-lede">
-            The PDF you ask questions of is the same one that quizzes you, so moving between
-            the two costs nothing and never asks you to upload it twice.
-          </p>
-          <ol className="flow-steps">
-            {STEPS.map(([label, text], i) => (
-              <li className="flow-step" key={label}>
-                <span className="flow-num">{i + 1}</span>
-                <h3>{label}</h3>
+        <section id="how" className="center-section">
+          <span className="pill-label"><Icon name="sparkle" size={14} /> Simple. Fast. Powerful.</span>
+          <h2 className="section-title">How It Works</h2>
+          <ol className="steps">
+            {STEPS.map(([icon, title, text], i) => (
+              <li className="step" key={title}>
+                <span className="step-ring"><Icon name={icon} size={30} /></span>
+                <span className="step-num">{i + 1}</span>
+                <h3>{title}</h3>
                 <p>{text}</p>
               </li>
             ))}
           </ol>
         </section>
 
-        <section className="bento-section">
-          <Eyebrow n="04" label="Why you can trust it" />
+        <section id="trust" className="center-section">
+          <span className="pill-label"><Icon name="shield" size={14} /> Why You Can Trust It</span>
           <h2 className="section-title">
-            Smart, but never <span className="gradient-text">making things up</span>.
+            Smart, but never <span className="title-accent">making things up</span>.
           </h2>
-          <p className="section-lede">
-            A PDF that talks is only useful if it tells the truth. Each of these is built into
-            how Ask &amp; Ace works, not just promised.
-          </p>
           <div className="bento">
-            {FEATURES.map((f) => (
+            {TRUST.map((f) => (
               <article className={f.wide ? "bento-card span-2" : "bento-card"} key={f.title}>
-                <div className="bento-icon" aria-hidden="true">
-                  <Icon name={f.icon} />
-                </div>
+                <span className="bento-icon"><Icon name={f.icon} size={21} /></span>
                 <h3>{f.title}</h3>
                 <p>{f.body}</p>
                 {f.wide && (
@@ -321,9 +206,9 @@ export default function Hub() {
           </div>
         </section>
 
-        <section className="faq-section">
-          <Eyebrow n="05" label="Questions" />
-          <h2 className="section-title">Before you bring a PDF to life</h2>
+        <section id="faq" className="center-section">
+          <span className="pill-label"><Icon name="help" size={14} /> Questions</span>
+          <h2 className="section-title">Before You Bring a PDF to Life</h2>
           <div className="faq">
             {FAQ.map(([q, a]) => (
               <details key={q}>
@@ -338,14 +223,20 @@ export default function Hub() {
         </section>
 
         <section className="cta-band">
-          <h2>
-            Your PDF has been quiet <span className="gradient-text">long enough</span>.
-          </h2>
-          <p>Upload one file. Ask it anything. Then let it make sure you know it.</p>
-          <div className="hero-cta">
-            <Link className="primary lg" to="/documents">Bring a PDF to life →</Link>
-            <Link className="btn-ghost lg" to="/exams">Ace your exam</Link>
+          <div className="cta-copy">
+            <h2>Ready to bring your PDF to life?</h2>
+            <p>Upload one file. Ask it anything. Then let it make sure you know it.</p>
           </div>
+          <div className="cta-action">
+            <Link className="primary lg" to="/documents?signup=1">
+              Get Started Free <Icon name="arrowRight" size={18} />
+            </Link>
+            <ul className="ticks">
+              <li><Icon name="check" size={15} />No Credit Card</li>
+              <li><Icon name="check" size={15} />Free to Use</li>
+            </ul>
+          </div>
+          <BooksArt />
         </section>
       </div>
       <SiteFooter />
@@ -353,31 +244,140 @@ export default function Hub() {
   );
 }
 
-function Eyebrow({ n, label }) {
+/* The product, pictured: the PDF itself floating in front of the workspace
+   that is reading it. Decorative — every claim it makes is also made in words
+   on this page — so it is hidden from screen readers. The figures are an
+   illustration of one document, kept inside the app's real limits. */
+function HeroArt() {
   return (
-    <div className="eyebrow">
-      <span className="eyebrow-n">{n}</span>
-      {label}
+    <div className="hero-art rise d2" aria-hidden="true">
+      <span className="orbit" />
+      <span className="spark s1">✦</span>
+      <span className="spark s2">✦</span>
+      <span className="spark s3">✦</span>
+
+      <div className="dash">
+        <div className="dash-top">
+          <span className="dash-home"><Icon name="home" size={16} /></span>
+          <strong>AI Workspace</strong>
+          <span className="dash-avatar"><Icon name="user" size={16} /></span>
+        </div>
+        <div className="dash-body">
+          <ul className="dash-nav">
+            <li className="on"><Icon name="grid" size={15} />Dashboard</li>
+            <li><Icon name="chat" size={15} />Ask your PDF</li>
+            <li><Icon name="file" size={15} />My Exams</li>
+            <li><Icon name="upload" size={15} />Uploads</li>
+            <li><Icon name="chart" size={15} />Results</li>
+            <li><Icon name="settings" size={15} />Settings</li>
+          </ul>
+
+          <div className="dash-main">
+            <p className="dash-label">Reading Document</p>
+            <div className="dash-file">
+              <span className="dash-file-icon"><Icon name="fileText" size={18} /></span>
+              <div className="dash-file-name">
+                <b>Biology Chapter 4.pdf</b>
+                <small>2.4 MB · 143 pages</small>
+              </div>
+              <div className="dash-progress"><i /></div>
+              <em>78%</em>
+            </div>
+
+            <div className="dash-stats">
+              <div><small>Pages Read</small><b className="c-amber">112</b></div>
+              <div><small>Passages Indexed</small><b className="c-cyan">211</b></div>
+              <div><small>Questions Written</small><b className="c-blue">30</b></div>
+            </div>
+
+            <div className="dash-row">
+              <div className="dash-panel">
+                <small>Difficulty Mix</small>
+                <div className="donut-wrap">
+                  <span className="donut" />
+                  <ul className="legend">
+                    <li><i className="k-easy" />Easy <b>30%</b></li>
+                    <li><i className="k-med" />Medium <b>50%</b></li>
+                    <li><i className="k-hard" />Hard <b>20%</b></li>
+                  </ul>
+                </div>
+              </div>
+              <div className="dash-panel">
+                <small>Question Types</small>
+                <ul className="qtypes">
+                  <li>MCQ <b>18</b></li>
+                  <li>True / False <b>6</b></li>
+                  <li>Short Answer <b>6</b></li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="dash-cta">
+              <Icon name="sparkle" size={15} /> Generate Exam Now <Icon name="arrowRight" size={15} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* The PDF itself, waking up: a pale page, a red PDF tag, a voice meter
+          that pulses, and the cited lines lit up in blue. */}
+      <div className="mock-pdf">
+        <div className="pdf-tag">PDF</div>
+        <div className="pdf-voice"><i /><i /><i /><i /></div>
+        <div className="pdf-title" />
+        <div className="pdf-line" />
+        <div className="pdf-line short" />
+        <div className="pdf-line lit" />
+        <div className="pdf-line lit short" />
+        <div className="pdf-line" />
+        <div className="pdf-line" />
+        <div className="pdf-line short" />
+        <div className="pdf-page">page 3</div>
+      </div>
+
+      <div className="cite-toast">
+        <span><Icon name="checkCircle" size={16} /></span>
+        <div>
+          <b>Answer found</b>
+          <small>Biology Chapter 4.pdf · page 3</small>
+        </div>
+      </div>
     </div>
   );
 }
 
-/* Inline so the icons inherit colour and need no icon package. */
-const PATHS = {
-  chat: <><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" /><path d="M8.5 11h7M8.5 14.5h4" /></>,
-  check: <><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" /></>,
-  quote: <><path d="M4 7h16M4 12h10M4 17h7" /><circle cx="18" cy="16" r="3" /><path d="M20.5 18.5L22 20" /></>,
-  shield: <><path d="M12 3l7 3v6c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9V6z" /><path d="M9 12l2 2 4-4" /></>,
-  spread: <><path d="M4 5h16M4 12h16M4 19h16" /><circle cx="8" cy="5" r="1.6" /><circle cx="15" cy="12" r="1.6" /><circle cx="11" cy="19" r="1.6" /></>,
-  lock: <><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
-  link: <><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1" /><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1" /></>,
-};
-
-function Icon({ name }) {
+/* Books and a mortarboard for the closing band, drawn rather than imported. */
+function BooksArt() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
-         strokeLinecap="round" strokeLinejoin="round">
-      {PATHS[name]}
+    <svg className="books-art" viewBox="0 0 220 170" aria-hidden="true">
+      <defs>
+        <linearGradient id="bk1" x1="0" x2="1">
+          <stop offset="0" stopColor="#4f46e5" />
+          <stop offset="1" stopColor="#a855f7" />
+        </linearGradient>
+        <linearGradient id="bk2" x1="0" x2="1">
+          <stop offset="0" stopColor="#2563eb" />
+          <stop offset="1" stopColor="#7c3aed" />
+        </linearGradient>
+        <linearGradient id="cap" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#312e81" />
+          <stop offset="1" stopColor="#1e1b4b" />
+        </linearGradient>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="9" />
+        </filter>
+      </defs>
+      <ellipse cx="110" cy="150" rx="90" ry="14" fill="#7c3aed" opacity="0.55" filter="url(#glow)" />
+      <rect x="28" y="118" width="164" height="30" rx="7" fill="url(#bk1)" />
+      <rect x="34" y="124" width="140" height="6" rx="3" fill="#e9d5ff" opacity="0.65" />
+      <rect x="40" y="90" width="148" height="28" rx="7" fill="url(#bk2)" />
+      <rect x="46" y="96" width="126" height="5" rx="2.5" fill="#dbeafe" opacity="0.6" />
+      <rect x="50" y="64" width="132" height="26" rx="7" fill="url(#bk1)" />
+      <rect x="56" y="70" width="112" height="5" rx="2.5" fill="#f3e8ff" opacity="0.6" />
+      <path d="M78 52v14c0 7 64 7 64 0V52" fill="url(#cap)" />
+      <path d="M110 18 176 44 110 70 44 44z" fill="#3730a3" stroke="#818cf8" strokeWidth="1.5" />
+      <path d="M110 44 158 52v26" fill="none" stroke="#c4b5fd" strokeWidth="2" />
+      <circle cx="158" cy="82" r="4" fill="#c4b5fd" />
     </svg>
   );
 }

@@ -1,4 +1,6 @@
 const BASE = (import.meta.env.VITE_API_URL || "http://localhost:8000").replace(/\/$/, "");
+// The interactive API docs live at `${API_BASE}/docs`.
+export const API_BASE = BASE;
 const TOKEN_KEY = "documind_token";
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY);
