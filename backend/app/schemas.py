@@ -30,6 +30,16 @@ class TokenOut(BaseModel):
     token_type: str = "bearer"
 
 
+class GoogleCredential(BaseModel):
+    """The ID token Google Identity Services hands to the browser."""
+    credential: str = Field(min_length=1, max_length=4096)
+
+
+class AuthConfigOut(BaseModel):
+    """What the sign-in screen needs to know before it draws itself."""
+    google_client_id: str = ""
+
+
 class AskIn(BaseModel):
     # 1, not 3: "hi" is a legitimate message and gets a friendly reply.
     question: str = Field(min_length=1, max_length=1000)

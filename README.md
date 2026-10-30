@@ -285,6 +285,8 @@ needs a `Bearer` token.
 |---|---|---|
 | `POST` | `/auth/register` | Create an account → JWT |
 | `POST` | `/auth/login` | Sign in → JWT |
+| `GET` | `/auth/config` | Which sign-in methods this server offers |
+| `POST` | `/auth/google` | `{credential}` from Google Sign-In → JWT |
 | `POST` | `/documents` | Upload and index a PDF (multipart `file`) |
 | `GET` | `/documents` | List your documents |
 | `DELETE` | `/documents/{id}` | Delete a document, its vectors and its tests |
@@ -314,6 +316,7 @@ All settings are environment variables, read from `backend/.env`. Only the first
 |---|---|---|
 | `SECRET_KEY` | *(placeholder)* | **Required in production.** Signs login tokens |
 | `LLM_API_KEY` | *(empty)* | **Required.** Your Groq / OpenAI-compatible key |
+| `GOOGLE_CLIENT_ID` | *(empty)* | OAuth client ID; empty hides the Google button |
 | `LLM_BASE_URL` | `https://api.groq.com/openai/v1` | Any OpenAI-compatible endpoint |
 | `LLM_MODEL` | `openai/gpt-oss-120b` | Chat model |
 | `LLM_TIMEOUT_SECONDS` | `30` | Timeout for answering a question |
@@ -332,6 +335,25 @@ All settings are environment variables, read from `backend/.env`. Only the first
 The frontend needs one variable, `VITE_API_URL` (default `http://localhost:8000`).
 
 </details>
+
+<br>
+
+### Google sign-in (optional)
+
+Leave `GOOGLE_CLIENT_ID` empty and the sign-in screen is just the email form. To add
+**Continue with Google**:
+
+1. In the [Google Cloud console](https://console.cloud.google.com/apis/credentials), create an
+   **OAuth client ID** of type *Web application*.
+2. Under **Authorized JavaScript origins**, add every origin the app is served from —
+   `http://localhost:5173` for development, `https://<your-app>.onrender.com` for the deployment.
+   No redirect URI is needed: the browser gets the ID token directly.
+3. Put the client ID in `GOOGLE_CLIENT_ID` (`backend/.env` locally, Render's dashboard in production).
+
+The client ID is public, not a secret — it ships in the page. The server verifies every token's
+signature against Google's keys, checks it was minted for this client ID, and refuses an address
+Google has not confirmed. Signing in with an address that already has a password account links the
+two rather than duplicating it, and the password keeps working.
 
 <br>
 
@@ -364,7 +386,8 @@ The whole app deploys as **one Docker service**: the [`Dockerfile`](Dockerfile) 
 and [`app/site.py`](backend/app/site.py) serves it at `/` with the API under `/api`. One URL, no CORS.
 
 **Render.** New → Blueprint → select this repo; it reads [`render.yaml`](render.yaml).
-Paste your Groq key into `LLM_API_KEY` when asked. `SECRET_KEY` is generated for you.
+Paste your Groq key into `LLM_API_KEY` when asked, and a `GOOGLE_CLIENT_ID` if you want the Google
+button (leave it blank otherwise). `SECRET_KEY` is generated for you.
 
 Then run `python scripts/smoke_test.py https://<your-app>.onrender.com/api`.
 
@@ -377,6 +400,8 @@ Then run `python scripts/smoke_test.py https://<your-app>.onrender.com/api`.
 ## 🔒 Security & privacy
 
 - Passwords are hashed with **bcrypt**, and a failed login doesn't say whether the email or the password was wrong.
+- Google ID tokens are verified server-side against Google's published keys, scoped to this app's
+  client ID, and only accepted for addresses Google reports as verified.
 - Login tokens are short-lived **JWTs**.
 - Your PDF text is only sent to the LLM provider you configure: a few passages to answer a question,
   or a sample of the document to write a test. The file itself never leaves your server.

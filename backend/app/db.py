@@ -7,7 +7,12 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT NOT NULL UNIQUE,
+    -- Empty for accounts that only ever sign in with Google: bcrypt never
+    -- produces an empty hash, so a password can never match one.
     password_hash TEXT NOT NULL,
+    -- Google's stable account id, set once that account signs in. NULL for
+    -- password-only accounts.
+    google_sub TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE IF NOT EXISTS documents (
@@ -64,12 +69,24 @@ CREATE INDEX IF NOT EXISTS idx_messages_user ON messages(user_id, id);
 """
 
 
+# Columns added after the first release. CREATE TABLE IF NOT EXISTS leaves an
+# existing table alone, so databases created before a column existed need it
+# added here. (table, column, DDL)
+MIGRATIONS = [
+    ("users", "google_sub", "ALTER TABLE users ADD COLUMN google_sub TEXT"),
+]
+
+
 class Database:
     def __init__(self, path: str):
         self.path = path
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         with self.session() as c:
             c.executescript(SCHEMA)
+            for table, column, ddl in MIGRATIONS:
+                have = {r["name"] for r in c.execute(f"PRAGMA table_info({table})")}
+                if column not in have:
+                    c.execute(ddl)
 
     @contextmanager
     def session(self):

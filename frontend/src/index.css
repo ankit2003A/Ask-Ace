@@ -599,6 +599,18 @@ a.primary, a.btn-ghost { display: inline-flex; align-items: center; }
 .auth-card input, .composer input {
   background: var(--bg-raised); border: 1px solid var(--line); border-radius: 10px; padding: 0.65rem 0.8rem; width: 100%;
 }
+/* Google's button is drawn by their script; this only spaces it and hides
+   the divider until it is actually there (no client ID, blocked script). */
+.google-signin { display: grid; gap: 0.9rem; }
+.google-signin .or { display: none; }
+.google-signin.is-ready .or {
+  display: flex; align-items: center; gap: 0.75rem;
+  font-size: 0.8rem; color: var(--muted);
+}
+.google-signin .or::before, .google-signin .or::after {
+  content: ""; flex: 1; height: 1px; background: var(--line);
+}
+
 .password-field { position: relative; display: block; }
 .password-field input { padding-right: 2.6rem; }
 /* Edge draws its own reveal button; ours replaces it. */

@@ -17,3 +17,7 @@ services:
         value: https://api.groq.com/openai/v1
       - key: LLM_MODEL
         value: openai/gpt-oss-120b
+      # Optional: paste an OAuth client ID to turn on "Continue with Google".
+      # Leave it blank and the sign-in screen just shows the email form.
+      - key: GOOGLE_CLIENT_ID
+        sync: false

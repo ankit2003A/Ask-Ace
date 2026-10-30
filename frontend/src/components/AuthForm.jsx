@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../api";
+import GoogleButton from "./GoogleButton.jsx";
 
 // Open eye while the password is hidden (click to show), crossed out while it is visible.
 function EyeIcon({ crossed }) {
@@ -76,6 +77,7 @@ export default function AuthForm({ onSuccess }) {
         <button className="primary" disabled={busy}>
           {busy ? "Please wait…" : mode === "login" ? "Log in" : "Create account"}
         </button>
+        <GoogleButton onToken={onSuccess} onError={setError} />
         <button
           type="button"
           className="link"

@@ -131,6 +131,9 @@ function uploadWithProgress(file, onProgress = () => {}) {
 export const api = {
   register: (email, password) => request("/auth/register", { method: "POST", json: { email, password } }),
   login: (email, password) => request("/auth/login", { method: "POST", json: { email, password } }),
+  // Which sign-in methods this server offers (currently: is Google configured).
+  authConfig: () => request("/auth/config"),
+  googleLogin: (credential) => request("/auth/google", { method: "POST", json: { credential } }),
   documents: () => request("/documents"),
   upload: (file, onProgress) => uploadWithProgress(file, onProgress),
   removeDocument: (id) => request(`/documents/${id}`, { method: "DELETE" }),

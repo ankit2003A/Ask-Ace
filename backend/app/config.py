@@ -11,6 +11,11 @@ class Settings(BaseSettings):
     secret_key: str = DEFAULT_SECRET
     access_token_minutes: int = 60
 
+    # Google Sign-In. Empty disables it: the frontend asks for this at
+    # /auth/config and only draws the Google button when it comes back set.
+    # It is the OAuth client ID from the Google Cloud console, not a secret.
+    google_client_id: str = ""
+
     # Storage
     data_dir: str = "./data"
 
