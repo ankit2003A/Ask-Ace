@@ -64,7 +64,7 @@ export default function AuthForm({ onSuccess }) {
             />
             <button
               type="button"
-              className="reveal"
+              className="password-toggle"
               aria-label={showPassword ? "Hide password" : "Show password"}
               title={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword(!showPassword)}
