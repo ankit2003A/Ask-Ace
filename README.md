@@ -353,7 +353,9 @@ Leave `GOOGLE_CLIENT_ID` empty and the sign-in screen is just the email form. To
 The client ID is public, not a secret — it ships in the page. The server verifies every token's
 signature against Google's keys, checks it was minted for this client ID, and refuses an address
 Google has not confirmed. Signing in with an address that already has a password account links the
-two rather than duplicating it, and the password keeps working.
+two rather than duplicating it, and removes the password: registration never verified the address,
+so that password could belong to someone who signed up with it first. Accounts are matched on
+Google's permanent account ID before the email address.
 
 <br>
 

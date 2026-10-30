@@ -94,16 +94,39 @@ def test_google_creates_an_account_then_reuses_it(tmp_path, llm, monkeypatch):
     assert rows[0]["password_hash"] == "" and rows[0]["google_sub"] == "google-123"
 
 
-def test_google_links_an_existing_password_account(tmp_path, llm, monkeypatch):
+def test_google_links_an_existing_password_account_and_drops_its_password(tmp_path, llm, monkeypatch):
+    # Registration never checks the address, so this password may be an
+    # attacker's who signed up first, waiting for the owner to arrive via Google.
     fake_google(monkeypatch, email="a@example.com")
     with google_client(tmp_path, llm) as c:
         register(c)
         assert c.post("/auth/google", json={"credential": "x.y.z"}).status_code == 200
+        login = c.post("/auth/login", json={"email": "a@example.com", "password": "password123"})
         with c.app.state.db.session() as db:
             rows = db.execute("SELECT password_hash, google_sub FROM users").fetchall()
     assert len(rows) == 1
-    # The password still works: linking adds Google, it does not replace it.
-    assert rows[0]["password_hash"].startswith("$2") and rows[0]["google_sub"] == "google-123"
+    assert rows[0]["password_hash"] == "" and rows[0]["google_sub"] == "google-123"
+    assert login.status_code == 401
+
+
+def test_google_matches_on_account_id_even_if_the_email_changed(tmp_path, llm, monkeypatch):
+    with google_client(tmp_path, llm) as c:
+        fake_google(monkeypatch, sub="google-123", email="old@example.com")
+        first = c.post("/auth/google", json={"credential": "x.y.z"})
+        fake_google(monkeypatch, sub="google-123", email="new@example.com")
+        again = c.post("/auth/google", json={"credential": "x.y.z"})
+        with c.app.state.db.session() as db:
+            count = db.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    assert first.status_code == again.status_code == 200
+    assert count == 1
+
+
+def test_google_refuses_an_email_owned_by_another_google_account(tmp_path, llm, monkeypatch):
+    with google_client(tmp_path, llm) as c:
+        fake_google(monkeypatch, sub="google-123", email="a@example.com")
+        assert c.post("/auth/google", json={"credential": "x.y.z"}).status_code == 200
+        fake_google(monkeypatch, sub="google-999", email="a@example.com")
+        assert c.post("/auth/google", json={"credential": "x.y.z"}).status_code == 409
 
 
 def test_google_rejects_a_token_that_does_not_verify(tmp_path, llm, monkeypatch):

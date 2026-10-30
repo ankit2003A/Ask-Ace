@@ -60,8 +60,10 @@ def google(body: GoogleCredential, request: Request):
     """Exchange a Google ID token for one of ours.
 
     First sign-in creates the account. An address that already has a password
-    account is the same person — Google has verified it — so that account gets
-    linked rather than duplicated, and either way in still works afterwards.
+    account gets linked rather than duplicated, and loses its password: Google
+    has verified the address, but registration never did, so the password may
+    belong to someone who signed up with this address before its owner did.
+    Keeping it would let them back into the account the owner now uses.
     """
     state = request.app.state
     client_id = state.settings.google_client_id
@@ -75,20 +77,31 @@ def google(body: GoogleCredential, request: Request):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(exc))
 
     with state.db.session() as c:
-        row = c.execute(
-            "SELECT id, google_sub FROM users WHERE google_sub = ? OR email = ?",
-            (google_sub, email),
-        ).fetchone()
-        if row is None:
-            cur = c.execute(
-                "INSERT INTO users (email, password_hash, google_sub) VALUES (?, '', ?)",
-                (email, google_sub),
-            )
-            user_id = cur.lastrowid
-        else:
+        # The Google account id first: it never changes, while an address can
+        # move to a different Google account.
+        row = c.execute("SELECT id FROM users WHERE google_sub = ?", (google_sub,)).fetchone()
+        if row is not None:
             user_id = row["id"]
-            if row["google_sub"] is None:
-                c.execute("UPDATE users SET google_sub = ? WHERE id = ?", (google_sub, user_id))
+        else:
+            row = c.execute("SELECT id, google_sub FROM users WHERE email = ?", (email,)).fetchone()
+            if row is None:
+                cur = c.execute(
+                    "INSERT INTO users (email, password_hash, google_sub) VALUES (?, '', ?)",
+                    (email, google_sub),
+                )
+                user_id = cur.lastrowid
+            elif row["google_sub"] is not None:
+                # Same address, different Google account: never merge silently.
+                raise HTTPException(
+                    status.HTTP_409_CONFLICT,
+                    "This email is already linked to a different Google account.",
+                )
+            else:
+                user_id = row["id"]
+                c.execute(
+                    "UPDATE users SET google_sub = ?, password_hash = '' WHERE id = ?",
+                    (google_sub, user_id),
+                )
 
     token = create_token(user_id, state.settings.secret_key, state.settings.access_token_minutes)
     return TokenOut(access_token=token)
