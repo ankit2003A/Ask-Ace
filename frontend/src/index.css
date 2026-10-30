@@ -599,6 +599,16 @@ a.primary, a.btn-ghost { display: inline-flex; align-items: center; }
 .auth-card input, .composer input {
   background: var(--bg-raised); border: 1px solid var(--line); border-radius: 10px; padding: 0.65rem 0.8rem; width: 100%;
 }
+.password-field { position: relative; display: block; }
+.password-field input { padding-right: 2.6rem; }
+/* Edge draws its own reveal button; ours replaces it. */
+.password-field input::-ms-reveal { display: none; }
+.reveal {
+  position: absolute; top: 50%; right: 0.4rem; transform: translateY(-50%);
+  display: grid; place-items: center; padding: 0.35rem;
+  background: none; border: 0; border-radius: 6px; color: var(--muted);
+}
+.reveal:hover { color: var(--ink); }
 
 /* Workspace (document module) */
 .layout { display: grid; grid-template-columns: 290px 1fr; height: calc(100dvh - 72px); position: relative; z-index: 1; }
