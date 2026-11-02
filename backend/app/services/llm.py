@@ -13,7 +13,9 @@ class LLMNotConfigured(LLMError):
 
 class LLMClient:
     def __init__(self, api_key: str, base_url: str, model: str, timeout: float = 30.0):
-        self.api_key = api_key
+        # Keys pasted into a dashboard often pick up a trailing newline or the
+        # quotes around them, and the provider then rejects a correct key.
+        self.api_key = api_key.strip().strip("\"'").strip()
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout = timeout
@@ -41,6 +43,13 @@ class LLMClient:
             )
         except httpx.HTTPError as exc:
             raise LLMError("Could not reach the LLM provider.") from exc
+        if resp.status_code in (401, 403):
+            # Not the provider failing: this server's key is wrong. Say so, so
+            # it is fixed where it lives instead of being retried.
+            raise LLMNotConfigured(
+                "The AI provider rejected the server's API key (LLM_API_KEY). "
+                "Check that it is correct and still active."
+            )
         if resp.status_code == 429:
             raise LLMError("LLM rate limit reached; try again shortly.")
         if resp.status_code == 400 and json_object:
