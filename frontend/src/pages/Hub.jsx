@@ -188,7 +188,7 @@ export default function Hub() {
               the exact page, then write and mark practice exams from it in seconds.
             </p>
             <div className="hero-cta rise d3">
-              <Link className="primary lg" to="/documents?signup=1">
+              <Link className="primary lg" to="/dashboard?signup=1">
                 Start Asking — It&apos;s Free
               </Link>
               <Link className="btn-outline lg" to="/#how">
@@ -342,7 +342,7 @@ export default function Hub() {
               <ul>
                 {PLAN.map((item) => <li key={item}><Icon name="checkCircle" size={17} />{item}</li>)}
               </ul>
-              <Link className="primary block" to="/documents?signup=1">
+              <Link className="primary block" to="/dashboard?signup=1">
                 Get Started Free <Icon name="arrowRight" size={17} />
               </Link>
             </article>
@@ -408,7 +408,7 @@ export default function Hub() {
             <p>Upload one file. Ask it anything. Then let it make sure you know it.</p>
           </div>
           <div className="cta-action">
-            <Link className="primary lg" to="/documents?signup=1">
+            <Link className="primary lg" to="/dashboard?signup=1">
               Get Started Free <Icon name="arrowRight" size={18} />
             </Link>
             <ul className="ticks">

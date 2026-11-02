@@ -181,8 +181,12 @@ def submit_attempt(exam_id: int, body: AttemptIn, request: Request,
 
     score = sum(1 for r in results if r["correct"])
     with state.db.session() as c:
-        c.execute("INSERT INTO attempts (exam_id, user_id, score, total) VALUES (?,?,?,?)",
-                  (exam_id, user["id"], score, len(results)))
+        cur = c.execute("INSERT INTO attempts (exam_id, user_id, score, total) VALUES (?,?,?,?)",
+                        (exam_id, user["id"], score, len(results)))
+        c.executemany(
+            "INSERT INTO attempt_answers (attempt_id, question_id, correct) VALUES (?,?,?)",
+            [(cur.lastrowid, r["id"], int(r["correct"])) for r in results],
+        )
 
     return {"exam_id": exam_id, "score": score, "total": len(results), "results": results}
 

@@ -17,7 +17,7 @@ export default function GitHubCallback({ onSuccess }) {
     return {
       code,
       ok,
-      returnTo: sessionStorage.getItem(RETURN_TO_KEY) || "/documents",
+      returnTo: sessionStorage.getItem(RETURN_TO_KEY) || "/dashboard",
       failure: ok ? "" : params.get("error_description") || "That GitHub sign-in could not be confirmed.",
     };
   });
@@ -46,7 +46,7 @@ export default function GitHubCallback({ onSuccess }) {
           <>
             <h1>Sign-in <span className="title-accent">failed</span></h1>
             <p className="error" role="alert">{error}</p>
-            <Link className="primary block" to="/documents">Back to sign in</Link>
+            <Link className="primary block" to="/dashboard">Back to sign in</Link>
           </>
         ) : (
           <>

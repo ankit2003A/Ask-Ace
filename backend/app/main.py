@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import DEFAULT_SECRET, Settings
 from app.db import Database
-from app.routers import auth, chat, documents, exams
+from app.routers import auth, chat, dashboard, documents, exams
 from app.services.embeddings import FastEmbedder
 from app.services.llm import LLMClient
 from app.services.vectorstore import VectorStore
@@ -44,6 +44,7 @@ def create_app(settings: Settings | None = None, *, embedder=None, llm=None) -> 
     app.include_router(documents.router)
     app.include_router(chat.router)
     app.include_router(exams.router)
+    app.include_router(dashboard.router)
 
     @app.get("/health", tags=["meta"])
     def health():

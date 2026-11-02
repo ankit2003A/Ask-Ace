@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
+import Icon from "./Icon.jsx";
+
+// One click to a useful first question, instead of an empty box.
+const SUGGESTIONS = [
+  "Summarise this document in five points",
+  "What are the key terms I should know?",
+  "Explain the hardest idea simply",
+];
 
 // Turn "[1]" markers in an answer into small clickable chips.
 // Some models emit fullwidth brackets ("【1】"), so accept those too.
@@ -119,12 +127,30 @@ export default function Chat({ messages, setMessages, scope, hasDocs, pageError,
 
       <div className="thread" aria-live="polite">
         {messages.length === 0 && (
-          <p className="empty">
-            {hasDocs ? "Ask a question about your documents." : "Upload a PDF in the sidebar, then ask a question."}
-          </p>
+          <div className="chat-empty">
+            <span className="chat-empty-orb"><Icon name="chat" size={28} /></span>
+            <h2>{hasDocs ? "Ask your PDF anything" : "Upload a PDF to begin"}</h2>
+            <p>
+              {hasDocs
+                ? "Answers come from your own pages, with the page number attached."
+                : "Use Upload PDF on the left. Text-based PDFs work best."}
+            </p>
+            {hasDocs && (
+              <div className="chat-suggest">
+                {SUGGESTIONS.map((s) => (
+                  <button type="button" key={s} onClick={() => setQuestion(s)}>{s}</button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
         {messages.map((m, i) => <Message key={m.id ?? i} m={m} />)}
-        {busy && <div className="msg assistant"><p className="muted">Searching your documents…</p></div>}
+        {busy && (
+          <div className="msg assistant typing" role="status">
+            <i /><i /><i />
+            <span className="sr-only">Searching your documents…</span>
+          </div>
+        )}
         {(error || pageError) && <p className="error" role="alert">{error || pageError}</p>}
         <div ref={end} />
       </div>

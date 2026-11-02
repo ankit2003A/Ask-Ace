@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { advance, api } from "../api";
 import UploadProgress from "../components/UploadProgress.jsx";
 import ExamPlayer from "../components/ExamPlayer.jsx";
+import Icon from "../components/Icon.jsx";
 import SiteFooter from "../components/SiteFooter.jsx";
 
 /* Exam prep module: pick an indexed document, generate a test from it, take it,
@@ -172,11 +173,14 @@ export default function Exams({ onLogout }) {
   return (
     <>
       <div className="page">
-        <h1 style={{ fontSize: "2rem", fontWeight: 800 }}>Ace your exam</h1>
-        <p className="muted" style={{ marginTop: "0.5rem", marginBottom: "1.75rem" }}>
-          Let your PDF quiz you. It writes a practice test from its own pages, marks it,
-          and shows you exactly where to revise.
-        </p>
+        <header className="app-hero">
+          <span className="pill-label"><Icon name="target" size={14} /> Ace your exam</span>
+          <h1>Let your PDF <span className="title-accent">quiz you</span>.</h1>
+          <p>
+            It writes a practice test from its own pages, marks it in seconds, and shows you
+            exactly where to revise.
+          </p>
+        </header>
 
         {handoff?.ok && (
           <div className="banner" role="status">
@@ -199,7 +203,7 @@ export default function Exams({ onLogout }) {
 
         <div className="exam-grid">
           <section className="card">
-            <h2 style={{ fontSize: "1.1rem", marginBottom: "1rem" }}>1. Choose a document</h2>
+            <h2 className="step-title"><span>1</span> Choose a document</h2>
 
             {docs === null && <p className="muted">Loading your documents…</p>}
 
@@ -244,7 +248,7 @@ export default function Exams({ onLogout }) {
 
             {tests.length > 0 && (
               <>
-                <h2 style={{ fontSize: "1.1rem", margin: "2rem 0 1rem" }}>Your tests</h2>
+                <h2 className="step-title sub"><Icon name="checkCircle" size={16} /> Your tests</h2>
                 <ul className="test-list">
                   {tests.map((t) => (
                     <li key={t.id}>
@@ -266,7 +270,7 @@ export default function Exams({ onLogout }) {
           </section>
 
           <aside className="card">
-            <h2 style={{ fontSize: "1.1rem", marginBottom: "1rem" }}>2. Set up the test</h2>
+            <h2 className="step-title"><span>2</span> Set up the test</h2>
 
             <label className="field">
               Number of questions

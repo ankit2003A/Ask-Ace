@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { advance, api } from "../api";
+import Icon from "./Icon.jsx";
 import UploadProgress from "./UploadProgress.jsx";
 
 export default function Sidebar({ docs, scope, setScope, onUploaded, onRemoved, onLogout, guard }) {
@@ -43,10 +44,13 @@ export default function Sidebar({ docs, scope, setScope, onUploaded, onRemoved, 
 
   return (
     <aside className="sidebar">
-      <div className="brand">Ask your PDF</div>
+      <div className="brand">
+        <span className="brand-orb" aria-hidden="true"><Icon name="chat" size={17} /></span>
+        <span>Ask your <span className="title-accent">PDF</span></span>
+      </div>
       <input ref={input} type="file" accept="application/pdf,.pdf" hidden onChange={upload} />
       <button className="primary" onClick={() => input.current.click()} disabled={busy}>
-        {busy ? "Indexing…" : "Upload PDF"}
+        <Icon name="upload" size={17} /> {busy ? "Indexing…" : "Upload PDF"}
       </button>
       {progress && <UploadProgress progress={progress} />}
       {ready && !busy && (

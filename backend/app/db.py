@@ -65,11 +65,20 @@ CREATE TABLE IF NOT EXISTS attempts (
     total INTEGER NOT NULL,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+-- One row per question per attempt: what the student got right and wrong,
+-- which is what the dashboard's accuracy and pages-to-revise are built from.
+CREATE TABLE IF NOT EXISTS attempt_answers (
+    attempt_id INTEGER NOT NULL REFERENCES attempts(id) ON DELETE CASCADE,
+    question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+    correct INTEGER NOT NULL
+);
 CREATE INDEX IF NOT EXISTS idx_documents_user ON documents(user_id);
 CREATE INDEX IF NOT EXISTS idx_exams_user ON exams(user_id, id);
 CREATE INDEX IF NOT EXISTS idx_questions_exam ON questions(exam_id, position);
 CREATE INDEX IF NOT EXISTS idx_attempts_exam ON attempts(exam_id, id);
 CREATE INDEX IF NOT EXISTS idx_messages_user ON messages(user_id, id);
+CREATE INDEX IF NOT EXISTS idx_attempts_user ON attempts(user_id, id);
+CREATE INDEX IF NOT EXISTS idx_answers_attempt ON attempt_answers(attempt_id);
 """
 
 

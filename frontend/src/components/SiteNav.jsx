@@ -22,7 +22,7 @@ export default function SiteNav({ authed, onLogout }) {
       <nav className="nav-links" aria-label="Main">
         {authed ? (
           <>
-            <NavLink to="/" end>Home</NavLink>
+            <NavLink to="/dashboard">Dashboard</NavLink>
             <NavLink to="/documents">Ask your PDF</NavLink>
             <NavLink to="/exams">Ace your exam</NavLink>
           </>
@@ -50,8 +50,8 @@ export default function SiteNav({ authed, onLogout }) {
           </Link>
         ) : (
           <>
-            <Link className="btn-outline sm" to="/documents">Log in</Link>
-            <Link className="primary sm" to="/documents?signup=1">Start Free</Link>
+            <Link className="btn-outline sm" to="/dashboard">Log in</Link>
+            <Link className="primary sm" to="/dashboard?signup=1">Start Free</Link>
           </>
         )}
       </div>

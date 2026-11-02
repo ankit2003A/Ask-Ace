@@ -4,6 +4,7 @@ import { getToken, setToken } from "./api";
 import AuthForm from "./components/AuthForm.jsx";
 import SiteNav from "./components/SiteNav.jsx";
 import Hub from "./pages/Hub.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
 import Exams from "./pages/Exams.jsx";
 import GitHubCallback from "./pages/GitHubCallback.jsx";
 import Workspace from "./components/Workspace.jsx";
@@ -31,6 +32,7 @@ export default function App() {
       <SiteNav authed={authed} onLogout={logout} />
       <Routes>
         <Route path="/" element={<Hub />} />
+        <Route path="/dashboard" element={guarded(<Dashboard onLogout={logout} />)} />
         <Route path="/documents" element={guarded(<Workspace onLogout={logout} />)} />
         <Route path="/exams" element={guarded(<Exams onLogout={logout} />)} />
         <Route path="/auth/github" element={<GitHubCallback onSuccess={login} />} />

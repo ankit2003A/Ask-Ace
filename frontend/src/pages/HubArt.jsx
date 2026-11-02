@@ -24,53 +24,55 @@ export function HeroArt() {
             <li className="on"><Icon name="grid" size={15} />Dashboard</li>
             <li><Icon name="chat" size={15} />Ask your PDF</li>
             <li><Icon name="file" size={15} />My Exams</li>
-            <li><Icon name="upload" size={15} />Uploads</li>
             <li><Icon name="chart" size={15} />Results</li>
-            <li><Icon name="settings" size={15} />Settings</li>
+            <li><Icon name="bookmark" size={15} />Revise</li>
+            <li><Icon name="bolt" size={15} />Activity</li>
           </ul>
 
           <div className="dash-main">
-            <p className="dash-label">Reading Document</p>
+            <p className="dash-label">Latest Result</p>
             <div className="dash-file">
-              <span className="dash-file-icon"><Icon name="fileText" size={18} /></span>
+              <span className="dash-file-icon"><Icon name="checkCircle" size={18} /></span>
               <div className="dash-file-name">
-                <b>Biology Chapter 4.pdf</b>
-                <small>2.4 MB · 143 pages</small>
+                <b>Biology Chapter 4 · Practice Test</b>
+                <small>10 questions · Medium · marked just now</small>
               </div>
               <div className="dash-progress"><i /></div>
-              <em>78%</em>
+              <em>8/10</em>
             </div>
 
             <div className="dash-stats">
-              <div><small>Pages Read</small><b className="c-amber">112</b></div>
-              <div><small>Passages Indexed</small><b className="c-cyan">211</b></div>
-              <div><small>Questions Written</small><b className="c-blue">30</b></div>
+              <div><small>Average Score</small><b className="c-amber">82%</b></div>
+              <div><small>Tests Taken</small><b className="c-cyan">12</b></div>
+              <div><small>Day Streak</small><b className="c-blue">5</b></div>
             </div>
 
             <div className="dash-row">
               <div className="dash-panel">
-                <small>Difficulty Mix</small>
-                <div className="donut-wrap">
-                  <span className="donut" />
-                  <ul className="legend">
-                    <li><i className="k-easy" /><span>Easy</span><b>30% <small>(9)</small></b></li>
-                    <li><i className="k-med" /><span>Medium</span><b>50% <small>(15)</small></b></li>
-                    <li><i className="k-hard" /><span>Hard</span><b>20% <small>(6)</small></b></li>
-                  </ul>
-                </div>
+                <small>Score Trend</small>
+                <svg className="dash-spark" viewBox="0 0 120 48" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="spark-l" x1="0" x2="1"><stop offset="0" stopColor="#3b82f6" /><stop offset="1" stopColor="#a855f7" /></linearGradient>
+                    <linearGradient id="spark-a" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#6366f1" stopOpacity="0.4" /><stop offset="1" stopColor="#6366f1" stopOpacity="0" /></linearGradient>
+                  </defs>
+                  <path d="M0 38 L17 34 L34 36 L51 26 L68 28 L85 18 L102 14 L120 9 L120 48 L0 48 Z" fill="url(#spark-a)" />
+                  <path d="M0 38 L17 34 L34 36 L51 26 L68 28 L85 18 L102 14 L120 9" fill="none" stroke="url(#spark-l)"
+                        strokeWidth="2.5" pathLength="1" className="dash-spark-line" vectorEffect="non-scaling-stroke" />
+                </svg>
+                <span className="dash-spark-note">▲ up 24 points</span>
               </div>
               <div className="dash-panel">
-                <small>Question Types</small>
-                <ul className="qtypes">
-                  <li>MCQ <b>18</b></li>
-                  <li>True / False <b>6</b></li>
-                  <li>Short Answer <b>6</b></li>
+                <small>Revise Next</small>
+                <ul className="qtypes revise">
+                  <li><i>p.12</i> Biology</li>
+                  <li><i>p.4</i> Chemistry</li>
+                  <li><i>p.27</i> History</li>
                 </ul>
               </div>
             </div>
 
             <div className="dash-cta">
-              <Icon name="sparkle" size={15} /> Generate Exam Now <Icon name="arrowRight" size={15} />
+              <Icon name="sparkle" size={15} /> New Practice Test <Icon name="arrowRight" size={15} />
             </div>
           </div>
         </div>

@@ -138,6 +138,8 @@ export const api = {
   authConfig: () => request("/auth/config"),
   googleLogin: (credential) => request("/auth/google", { method: "POST", json: { credential } }),
   githubLogin: (code) => request("/auth/github", { method: "POST", json: { code } }),
+  // Minutes to add to UTC for local time, so streaks and days match the student's clock.
+  dashboard: () => request(`/dashboard?tz_offset=${-new Date().getTimezoneOffset()}`),
   documents: () => request("/documents"),
   upload: (file, onProgress) => uploadWithProgress(file, onProgress),
   removeDocument: (id) => request(`/documents/${id}`, { method: "DELETE" }),

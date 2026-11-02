@@ -288,6 +288,7 @@ needs a `Bearer` token.
 | `GET` | `/auth/config` | Which sign-in methods this server offers |
 | `POST` | `/auth/google` | `{credential}` from Google Sign-In → JWT |
 | `POST` | `/auth/github` | `{code}` from GitHub's sign-in redirect → JWT |
+| `GET` | `/dashboard` | Your progress: scores, trend, accuracy by level and type, pages to revise, activity |
 | `POST` | `/documents` | Upload and index a PDF (multipart `file`) |
 | `GET` | `/documents` | List your documents |
 | `DELETE` | `/documents/{id}` | Delete a document, its vectors and its tests |
