@@ -21,3 +21,9 @@ services:
       # Leave it blank and the sign-in screen just shows the email form.
       - key: GOOGLE_CLIENT_ID
         sync: false
+      # Optional: a GitHub OAuth app (callback: https://<your-app>.onrender.com/auth/github)
+      # turns on "Continue with GitHub". Leave both blank to hide the button.
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false

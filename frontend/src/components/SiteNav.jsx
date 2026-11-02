@@ -1,9 +1,11 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { API_BASE } from "../api";
 import Icon from "./Icon.jsx";
 
-/* Shared across every page. Section links jump down the landing page; the two
-   module links are the two halves of the name: Ask, then Ace. Signed out on a
-   module page means the sign-in card is showing, so the way out is home. */
+/* Shared across every page. Signed out, the links walk the landing page, as
+   in the designs; signed in, they are the two modules: Ask, then Ace. Signed
+   out on any other page means the sign-in card is showing, so the way out is
+   home. */
 export default function SiteNav({ authed, onLogout }) {
   const { pathname } = useLocation();
   const onAuthScreen = !authed && pathname !== "/";
@@ -18,11 +20,25 @@ export default function SiteNav({ authed, onLogout }) {
       </Link>
 
       <nav className="nav-links" aria-label="Main">
-        <Link className="nav-section" to="/#features">Features</Link>
-        <Link className="nav-section" to="/#how">How It Works</Link>
-        <NavLink to="/documents">Ask your PDF</NavLink>
-        <NavLink to="/exams">Ace your exam</NavLink>
-        <Link className="nav-section" to="/#faq">FAQ</Link>
+        {authed ? (
+          <>
+            <NavLink to="/" end>Home</NavLink>
+            <NavLink to="/documents">Ask your PDF</NavLink>
+            <NavLink to="/exams">Ace your exam</NavLink>
+          </>
+        ) : (
+          <>
+            <Link to="/#features">Features</Link>
+            <Link to="/#how">How It Works</Link>
+          </>
+        )}
+        <a className="nav-section" href={`${API_BASE}/docs`}>Docs</a>
+        {!authed && (
+          <>
+            <Link className="nav-section" to="/#pricing">Pricing</Link>
+            <Link className="nav-section" to="/#about">About</Link>
+          </>
+        )}
       </nav>
 
       <div className="nav-actions">

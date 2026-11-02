@@ -287,6 +287,7 @@ needs a `Bearer` token.
 | `POST` | `/auth/login` | Sign in → JWT |
 | `GET` | `/auth/config` | Which sign-in methods this server offers |
 | `POST` | `/auth/google` | `{credential}` from Google Sign-In → JWT |
+| `POST` | `/auth/github` | `{code}` from GitHub's sign-in redirect → JWT |
 | `POST` | `/documents` | Upload and index a PDF (multipart `file`) |
 | `GET` | `/documents` | List your documents |
 | `DELETE` | `/documents/{id}` | Delete a document, its vectors and its tests |
@@ -317,6 +318,7 @@ All settings are environment variables, read from `backend/.env`. Only the first
 | `SECRET_KEY` | *(placeholder)* | **Required in production.** Signs login tokens |
 | `LLM_API_KEY` | *(empty)* | **Required.** Your Groq / OpenAI-compatible key |
 | `GOOGLE_CLIENT_ID` | *(empty)* | OAuth client ID; empty hides the Google button |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | *(empty)* | GitHub OAuth app; both needed for the GitHub button |
 | `LLM_BASE_URL` | `https://api.groq.com/openai/v1` | Any OpenAI-compatible endpoint |
 | `LLM_MODEL` | `openai/gpt-oss-120b` | Chat model |
 | `LLM_TIMEOUT_SECONDS` | `30` | Timeout for answering a question |
@@ -356,6 +358,18 @@ Google has not confirmed. Signing in with an address that already has a password
 two rather than duplicating it, and removes the password: registration never verified the address,
 so that password could belong to someone who signed up with it first. Accounts are matched on
 Google's permanent account ID before the email address.
+
+### GitHub sign-in (optional)
+
+1. On GitHub: **Settings → Developer settings → OAuth Apps → New OAuth App**.
+2. Set **Authorization callback URL** to `<your site>/auth/github`: `http://localhost:5173/auth/github`
+   locally, `https://<your-app>.onrender.com/auth/github` in production. GitHub allows one callback
+   per app, so use one app for each.
+3. Put the client ID and a generated client secret in `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`.
+
+GitHub has no ID token, so the browser brings back a one-time code that only the server can trade
+for a token, using the secret. A random `state` value ties the reply to the browser that asked. Only
+the account's **primary, verified** email is used, and linking follows the same rules as Google.
 
 <br>
 

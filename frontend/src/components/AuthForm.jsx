@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api";
-import GoogleButton from "./GoogleButton.jsx";
 import Icon from "./Icon.jsx";
+import SocialSignIn from "./SocialSignIn.jsx";
 
 // Crossed out while the password is hidden, open once it is shown.
 function EyeIcon({ crossed }) {
@@ -16,37 +16,38 @@ function EyeIcon({ crossed }) {
   );
 }
 
-/* The cards floating either side of the form. Each side is a fixed-size box,
-   so the connecting curves can be drawn in that box's own coordinates. Every
-   line is something the app does. */
+/* The cards floating either side of the form, placed as a share of the form's
+   height so they keep their spots as it grows. The curves are drawn in the
+   same percentage space (0-100 each way). Every line is something the app
+   does. */
 const SIDES = {
   login: {
     left: {
       cards: [
-        { top: 70, x: 10, icon: "file", title: "Upload a PDF", text: "Notes, textbooks or slides" },
-        { top: 360, x: 14, icon: "chart", title: "See what to revise", text: "Every miss points to its page" },
+        { top: 17, icon: "file", title: "Upload Notes", text: "PDFs, books or class notes" },
+        { top: 59, icon: "chart", title: "Track Progress", text: "Your best score on every test" },
       ],
-      path: "M 90 200 C 90 260, 150 270, 190 330 S 270 440, 290 470",
+      path: "M 56 37 C 56 50, 78 52, 108 60",
     },
     right: {
-      cards: [{ top: 230, x: 40, icon: "help", title: "Generate exams", text: "MCQ, true/false and short answer" }],
-      path: "M 120 370 C 120 450, 60 470, -30 520",
+      cards: [{ top: 40, icon: "help", title: "Generate Exams", text: "MCQs, true/false and more with AI" }],
+      path: "M 44 60 C 44 72, 20 76, -8 82",
     },
   },
   register: {
     left: {
       cards: [
-        { top: 120, x: 30, icon: "chat", title: "Ask your PDF", text: "Answers cite the exact page" },
-        { top: 400, x: 26, icon: "star", title: "Personalised tests", text: "Written from your own pages" },
+        { top: 19, icon: "cap", title: "Ask Your PDF", text: "Answers that show the exact page" },
+        { top: 55, icon: "star", title: "Personalized Exams", text: "Tailored to your own notes" },
       ],
-      path: "M 110 250 C 110 300, 170 320, 290 360",
+      path: "M 56 35 C 56 45, 80 48, 108 50",
     },
     right: {
       cards: [
-        { top: 120, x: 50, icon: "book", title: "Learn smarter", text: "Revise the pages you missed" },
-        { top: 420, x: 52, icon: "shield", title: "Private by default", text: "Only you see your documents" },
+        { top: 19, icon: "book", title: "Learn Smarter", text: "AI-powered practice from your PDFs" },
+        { top: 57, icon: "rocket", title: "Achieve More", text: "Retake, improve and beat your best" },
       ],
-      path: "M 150 250 C 150 330, 60 360, -30 420",
+      path: "M 44 35 C 44 47, 22 50, -8 54",
     },
   },
 };
@@ -54,17 +55,23 @@ const SIDES = {
 const TRUST = [
   ["lock", "Secure & Private"],
   ["creditCard", "No Credit Card Required"],
-  ["quote", "Every Answer Cites Its Page"],
+  ["users", "Built for Students"],
+];
+
+const CHECKS = [
+  [(p) => p.length >= 8, "At least 8 characters"],
+  [(p) => /\d/.test(p), "Include a number"],
+  [(p) => /[^A-Za-z0-9]/.test(p), "Include a special character"],
 ];
 
 function FloatSide({ side, data }) {
   return (
     <aside className={`auth-float ${side}`} aria-hidden="true">
-      <svg className="auth-lines" viewBox="0 0 260 600" preserveAspectRatio="none">
-        <path d={data.path} />
+      <svg className="auth-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path d={data.path} vectorEffect="non-scaling-stroke" />
       </svg>
-      {data.cards.map((c) => (
-        <div className="float-card" key={c.title} style={{ top: c.top, [side === "left" ? "left" : "right"]: c.x }}>
+      {data.cards.map((c, i) => (
+        <div className="float-card" key={c.title} style={{ top: `${c.top}%`, animationDelay: `${i * 1.6}s` }}>
           <span className="float-icon"><Icon name={c.icon} size={20} /></span>
           <strong>{c.title}</strong>
           <span>{c.text}</span>
@@ -73,12 +80,6 @@ function FloatSide({ side, data }) {
     </aside>
   );
 }
-
-const CHECKS = [
-  [(p) => p.length >= 8, "At least 8 characters"],
-  [(p) => /\d/.test(p), "Include a number (recommended)"],
-  [(p) => /[^A-Za-z0-9]/.test(p), "Include a special character (recommended)"],
-];
 
 export default function AuthForm({ onSuccess }) {
   const [params] = useSearchParams();
@@ -91,9 +92,12 @@ export default function AuthForm({ onSuccess }) {
     setSeenSignup(wantsSignup);
     setMode(wantsSignup ? "register" : "login");
   }
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [forgot, setForgot] = useState(false);
+  const [providers, setProviders] = useState({ google: false, github: false });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -102,10 +106,18 @@ export default function AuthForm({ onSuccess }) {
   async function submit(e) {
     e.preventDefault();
     setError("");
+    if (registering) {
+      const unmet = CHECKS.find(([test]) => !test(password));
+      if (unmet) {
+        setError(`Password: ${unmet[1].toLowerCase()}.`);
+        return;
+      }
+    }
     setBusy(true);
     try {
-      const fn = registering ? api.register : api.login;
-      const { access_token } = await fn(email, password);
+      const { access_token } = registering
+        ? await api.register(email, password, name)
+        : await api.login(email, password);
       onSuccess(access_token);
     } catch (err) {
       setError(err.message);
@@ -114,9 +126,15 @@ export default function AuthForm({ onSuccess }) {
     }
   }
 
+  function switchMode() {
+    setMode(registering ? "login" : "register");
+    setError("");
+    setForgot(false);
+  }
+
   return (
     <main className="auth">
-      <div className="auth-orbs" aria-hidden="true"><i /><i /><i /></div>
+      <div className={`auth-orbs ${mode}`} aria-hidden="true"><i /><i /><i /></div>
 
       <div className="auth-stage">
         <FloatSide side="left" data={SIDES[mode].left} />
@@ -129,11 +147,22 @@ export default function AuthForm({ onSuccess }) {
           </h1>
           <p className="auth-sub">
             {registering
-              ? "Start asking your PDFs questions and acing practice tests in seconds."
-              : "Log in to keep bringing your PDFs to life with Ask & Ace."}
+              ? "Start asking your PDFs and generating exams with AI in seconds."
+              : "Log in to continue your learning journey with Ask & Ace."}
           </p>
 
-          <GoogleButton onToken={onSuccess} onError={setError} />
+          <SocialSignIn onToken={onSuccess} onError={setError} onProviders={setProviders} />
+
+          {registering && (
+            <label className="auth-field">
+              Full Name
+              <span className="input-wrap">
+                <Icon name="user" size={18} className="input-icon" />
+                <input value={name} onChange={(e) => setName(e.target.value)} maxLength={80}
+                       placeholder="Enter your full name" autoComplete="name" />
+              </span>
+            </label>
+          )}
 
           <label className="auth-field">
             Email Address
@@ -170,15 +199,39 @@ export default function AuthForm({ onSuccess }) {
             </span>
           </label>
 
-          {registering && (
-            <ul className="pw-checks" aria-label="Password guidance">
+          {registering ? (
+            <ul className="pw-checks" aria-label="Password requirements">
               {CHECKS.map(([test, label]) => (
                 <li key={label} className={test(password) ? "met" : ""}>
-                  <Icon name="check" size={11} />
+                  <Icon name="check" size={10} />
                   {label}
                 </li>
               ))}
             </ul>
+          ) : (
+            <div className="forgot">
+              <button type="button" className="link" aria-expanded={forgot}
+                      onClick={() => setForgot(!forgot)}>
+                Forgot password?
+              </button>
+              {/* No email is sent from this app, but a provider sign-in with the
+                  same address is a real way back in: it links to the account. */}
+              {forgot && (
+                <p className="forgot-help">
+                  {providers.google || providers.github ? (
+                    <>
+                      Use{" "}
+                      {[providers.google && "Continue with Google", providers.github && "Continue with GitHub"]
+                        .filter(Boolean)
+                        .map((label, i) => <span key={label}>{i > 0 && " or "}<strong>{label}</strong></span>)}{" "}
+                      with the same email address. You&apos;ll be signed straight in to your account.
+                    </>
+                  ) : (
+                    "This app can't send reset emails yet. Create a new account to keep going."
+                  )}
+                </p>
+              )}
+            </div>
           )}
 
           {error && <p className="error" role="alert">{error}</p>}
@@ -190,14 +243,7 @@ export default function AuthForm({ onSuccess }) {
 
           <p className="auth-switch">
             {registering ? "Already have an account?" : "Don't have an account?"}{" "}
-            <button
-              type="button"
-              className="link"
-              onClick={() => {
-                setMode(registering ? "login" : "register");
-                setError("");
-              }}
-            >
+            <button type="button" className="link" onClick={switchMode}>
               {registering ? "Log in" : "Sign up"}
             </button>
           </p>

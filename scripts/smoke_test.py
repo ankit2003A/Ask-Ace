@@ -55,7 +55,7 @@ with httpx.Client(base_url=BASE, timeout=120) as c:
     check(c.get("/health").status_code == 200, "server is healthy")
 
     email = f"smoke-{uuid.uuid4().hex[:8]}@example.com"
-    r = c.post("/auth/register", json={"email": email, "password": "smoke-test-pw"})
+    r = c.post("/auth/register", json={"email": email, "password": "smoke-test-pw1!"})
     check(r.status_code == 201, "register")
     c.headers["Authorization"] = f"Bearer {r.json()['access_token']}"
 

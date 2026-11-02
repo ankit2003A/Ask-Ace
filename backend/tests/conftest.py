@@ -70,7 +70,7 @@ def client(tmp_path, llm):
         yield c
 
 
-def register(client, email="a@example.com", password="password123"):
+def register(client, email="a@example.com", password="password123!"):
     r = client.post("/auth/register", json={"email": email, "password": password})
     assert r.status_code == 201, r.text
     return {"Authorization": f"Bearer {r.json()['access_token']}"}

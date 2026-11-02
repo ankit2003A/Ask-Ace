@@ -70,6 +70,24 @@ const TRUST = [
   },
 ];
 
+const PLAN = [
+  "Answers with page citations, on every question",
+  "Practice tests: MCQ, true/false, short answer",
+  "Instant marking and best-score tracking",
+  "PDFs up to 10 MB and 200 pages",
+];
+
+const SELF_HOST = [
+  "Every feature, on your own server",
+  "Any OpenAI-compatible model, or a local one",
+  "Your documents never leave your machine",
+  "One Docker image, one-click Render deploy",
+];
+
+const STACK = ["FastAPI", "ChromaDB", "fastembed", "Groq / any LLM", "React 19", "Vite", "SQLite", "Docker"];
+
+const REPO = "https://github.com/ankit2003A/Ask-Ace";
+
 const FAQ = [
   [
     "What does “bringing a PDF to life” actually mean?",
@@ -130,14 +148,14 @@ export default function Hub() {
               <Link className="primary lg" to="/documents?signup=1">
                 Start Asking — It&apos;s Free
               </Link>
-              <Link className="btn-outline lg" to="/exams">
-                <Icon name="play" size={14} /> Make a Practice Test
+              <Link className="btn-outline lg" to="/#how">
+                <Icon name="play" size={14} /> See How It Works
               </Link>
             </div>
             <ul className="ticks rise d4">
               <li><Icon name="check" size={15} />No Credit Card</li>
-              <li><Icon name="check" size={15} />Page-Cited Answers</li>
-              <li><Icon name="check" size={15} />Marked Instantly</li>
+              <li><Icon name="check" size={15} />Instant Results</li>
+              <li><Icon name="check" size={15} />Built for Students</li>
             </ul>
           </div>
 
@@ -203,6 +221,55 @@ export default function Hub() {
                 )}
               </article>
             ))}
+          </div>
+        </section>
+
+        <section id="pricing" className="center-section">
+          <span className="pill-label"><Icon name="creditCard" size={14} /> Pricing</span>
+          <h2 className="section-title">
+            Simple pricing: <span className="title-accent">free</span>.
+          </h2>
+          <div className="price-grid">
+            <article className="price-card featured">
+              <span className="price-tag">Hosted</span>
+              <h3>Free</h3>
+              <p className="price"><b>$0</b><span>no card, no trial clock</span></p>
+              <ul>
+                {PLAN.map((item) => <li key={item}><Icon name="checkCircle" size={17} />{item}</li>)}
+              </ul>
+              <Link className="primary block" to="/documents?signup=1">
+                Get Started Free <Icon name="arrowRight" size={17} />
+              </Link>
+            </article>
+            <article className="price-card">
+              <span className="price-tag alt">Open source</span>
+              <h3>Self-host</h3>
+              <p className="price"><b>Your key</b><span>run it on your own server</span></p>
+              <ul>
+                {SELF_HOST.map((item) => <li key={item}><Icon name="checkCircle" size={17} />{item}</li>)}
+              </ul>
+              <a className="btn-outline block" href={REPO}>
+                <Icon name="github" size={17} /> View the Source
+              </a>
+            </article>
+          </div>
+        </section>
+
+        <section id="about" className="center-section">
+          <span className="pill-label"><Icon name="user" size={14} /> About</span>
+          <h2 className="section-title">
+            Built by a student, <span className="title-accent">for students</span>.
+          </h2>
+          <div className="about-card">
+            <p>
+              Ask &amp; Ace is a personal project by <strong>Ankit Verma</strong>. It started from a
+              simple frustration: a PDF of notes can&apos;t tell you what&apos;s in it, and
+              re-reading all of it before an exam doesn&apos;t tell you what stuck. So this app
+              reads the PDF, answers from it with the page attached, and then tests you on it.
+            </p>
+            <ul className="stack">
+              {STACK.map((tech) => <li key={tech}>{tech}</li>)}
+            </ul>
           </div>
         </section>
 
@@ -296,9 +363,9 @@ function HeroArt() {
                 <div className="donut-wrap">
                   <span className="donut" />
                   <ul className="legend">
-                    <li><i className="k-easy" />Easy <b>30%</b></li>
-                    <li><i className="k-med" />Medium <b>50%</b></li>
-                    <li><i className="k-hard" />Hard <b>20%</b></li>
+                    <li><i className="k-easy" /><span>Easy</span><b>30% <small>(9)</small></b></li>
+                    <li><i className="k-med" /><span>Medium</span><b>50% <small>(15)</small></b></li>
+                    <li><i className="k-hard" /><span>Hard</span><b>20% <small>(6)</small></b></li>
                   </ul>
                 </div>
               </div>

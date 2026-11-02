@@ -2,6 +2,7 @@
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
+import httpx
 import jwt
 
 ALGORITHM = "HS256"
@@ -74,3 +75,47 @@ def verify_google_token(credential: str, client_id: str) -> tuple[str, str]:
     if not email or claims.get("email_verified") is not True:
         raise GoogleTokenError("That Google account has no verified email address.")
     return str(claims["sub"]), email
+
+
+# --- GitHub Sign-In ---------------------------------------------------------
+# GitHub has no ID token: the browser brings back a one-time code, which only
+# the server can trade for an access token (it needs the client secret), and
+# the token then reads who signed in.
+GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
+GITHUB_API = "https://api.github.com"
+
+
+class GitHubAuthError(Exception):
+    """The code from the browser did not lead to a usable GitHub identity."""
+
+
+def github_identity(code: str, client_id: str, client_secret: str) -> tuple[str, str]:
+    """Return (GitHub account id, primary verified email) for a sign-in code."""
+    try:
+        with httpx.Client(timeout=10, headers={"Accept": "application/json"}) as http:
+            r = http.post(GITHUB_TOKEN_URL, data={
+                "client_id": client_id, "client_secret": client_secret, "code": code,
+            })
+            token = r.json().get("access_token") if r.status_code == 200 else None
+            if not token:
+                raise GitHubAuthError("Could not verify that GitHub sign-in.")
+            auth = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
+            user = http.get(f"{GITHUB_API}/user", headers=auth)
+            emails = http.get(f"{GITHUB_API}/user/emails", headers=auth)
+            user.raise_for_status()
+            emails.raise_for_status()
+            account_id, addresses = user.json()["id"], emails.json()
+    except (httpx.HTTPError, ValueError, KeyError) as exc:
+        raise GitHubAuthError("Could not verify that GitHub sign-in.") from exc
+
+    # Only the address GitHub has verified and marked primary: an unverified
+    # one could belong to someone else, and signing in with it would hand
+    # over their account.
+    email = next(
+        (str(e.get("email", "")).strip().lower() for e in addresses
+         if isinstance(e, dict) and e.get("primary") and e.get("verified")),
+        "",
+    )
+    if not email:
+        raise GitHubAuthError("That GitHub account has no verified primary email address.")
+    return str(account_id), email

@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     # /auth/config and only draws the Google button when it comes back set.
     # It is the OAuth client ID from the Google Cloud console, not a secret.
     google_client_id: str = ""
+    # GitHub sign-in, same idea: empty ID hides the button. Unlike Google's,
+    # GitHub's flow needs the secret, to trade the browser's code for a token.
+    github_client_id: str = ""
+    github_client_secret: str = ""
 
     # Storage
     data_dir: str = "./data"

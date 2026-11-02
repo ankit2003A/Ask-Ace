@@ -25,6 +25,26 @@ class Credentials(BaseModel):
         return v
 
 
+class RegisterIn(Credentials):
+    """Sign-up adds a display name and a stronger password rule. Login keeps
+    the plain rule, so accounts made before this rule existed still get in."""
+    name: str = Field(default="", max_length=80)
+
+    @field_validator("name")
+    @classmethod
+    def tidy_name(cls, v: str) -> str:
+        return " ".join(v.split())
+
+    @field_validator("password")
+    @classmethod
+    def strong_password(cls, v: str) -> str:
+        if not re.search(r"\d", v):
+            raise ValueError("password must include a number")
+        if not re.search(r"[^A-Za-z0-9]", v):
+            raise ValueError("password must include a special character")
+        return v
+
+
 class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -35,9 +55,15 @@ class GoogleCredential(BaseModel):
     credential: str = Field(min_length=1, max_length=4096)
 
 
+class GitHubCode(BaseModel):
+    """The one-time code GitHub sends back to the browser after sign-in."""
+    code: str = Field(min_length=1, max_length=512)
+
+
 class AuthConfigOut(BaseModel):
     """What the sign-in screen needs to know before it draws itself."""
     google_client_id: str = ""
+    github_client_id: str = ""
 
 
 class AskIn(BaseModel):

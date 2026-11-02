@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS users (
     -- Google's stable account id, set once that account signs in. NULL for
     -- password-only accounts.
     google_sub TEXT,
+    -- GitHub's numeric account id, the same way.
+    github_id TEXT,
+    -- What the user typed as their name at sign-up; may be empty.
+    name TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE IF NOT EXISTS documents (
@@ -74,6 +78,8 @@ CREATE INDEX IF NOT EXISTS idx_messages_user ON messages(user_id, id);
 # added here. (table, column, DDL)
 MIGRATIONS = [
     ("users", "google_sub", "ALTER TABLE users ADD COLUMN google_sub TEXT"),
+    ("users", "github_id", "ALTER TABLE users ADD COLUMN github_id TEXT"),
+    ("users", "name", "ALTER TABLE users ADD COLUMN name TEXT NOT NULL DEFAULT ''"),
 ]
 
 
