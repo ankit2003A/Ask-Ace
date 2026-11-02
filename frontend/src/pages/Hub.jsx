@@ -1,7 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { API_BASE } from "../api";
 import Icon from "../components/Icon.jsx";
 import SiteFooter from "../components/SiteFooter.jsx";
+import { AceShowcase, AskShowcase, BooksArt, HeroArt, TrustVisual, WhyVisual } from "./HubArt.jsx";
 
 /* The idea the whole page hangs on: a PDF is normally a dead file you scroll
    through. Ask & Ace brings it to life — it answers, shows its sources and
@@ -15,13 +17,15 @@ const WORKS_WITH = [
   ["search", "Research papers"],
   ["bookmark", "Revision guides"],
   ["settings", "Manuals"],
+  ["quote", "Case studies"],
+  ["cap", "Past papers"],
 ];
 
 const WHY = [
-  ["fileText", "Upload Any PDF", "Notes, textbooks or slides. It is read page by page and indexed in seconds."],
-  ["chat", "It Talks Back", "Ask in your own words. Every answer is drawn from your pages and cites them."],
-  ["help", "Writes Smart Exams", "Multiple choice, true/false and short answer — 5 to 30 questions, from the whole document."],
-  ["target", "Revise What Matters", "Your attempt is marked instantly, and every miss points to the page to reread."],
+  ["fileText", "upload", "Upload Any PDF", "Notes, textbooks or slides. It is read page by page and indexed in seconds."],
+  ["chat", "chat", "It Talks Back", "Ask in your own words. Every answer is drawn from your pages and cites them."],
+  ["help", "exam", "Writes Smart Exams", "Multiple choice, true/false and short answer — 5 to 30 questions, from the whole document."],
+  ["target", "revise", "Revise What Matters", "Your attempt is marked instantly, and every miss points to the page to reread."],
 ];
 
 const STEPS = [
@@ -31,10 +35,19 @@ const STEPS = [
   ["checkCircle", "Revise and Retake", "Read the page you missed, then try again."],
 ];
 
+/* The app's real limits, not invented popularity figures. */
+const STATS = [
+  ["200", "pages per PDF"],
+  ["30", "questions per test"],
+  ["3", "question types"],
+  ["1", "upload for both"],
+];
+
 const TRUST = [
   {
     wide: true,
     icon: "quote",
+    visual: "cite",
     title: "It shows you where it read that",
     body:
       "Your PDF answers only from its own pages, and every answer is numbered back to them. " +
@@ -42,31 +55,27 @@ const TRUST = [
   },
   {
     icon: "shield",
+    visual: "refuse",
     title: "It admits when it doesn't know",
-    body:
-      "If the answer isn't in your PDF, it says so plainly instead of making something up. " +
-      "No confident inventions.",
+    body: "If the answer isn't in your PDF, it says so plainly instead of making something up.",
   },
   {
     icon: "spread",
+    visual: "spread",
     title: "Not just chapter one",
-    body:
-      "Tests are drawn from across the whole document, so the end of the book gets the same " +
-      "attention as the start.",
+    body: "Tests are drawn from across the whole document, so the last chapter counts as much as the first.",
   },
   {
     icon: "lock",
+    visual: "lock",
     title: "No peeking at the answers",
-    body:
-      "Questions reach your screen without their answers. The server marks your attempt and " +
-      "only then reveals the key.",
+    body: "Questions reach your screen without their answers. The server marks you, then reveals the key.",
   },
   {
     icon: "link",
+    visual: "link",
     title: "One upload does both",
-    body:
-      "The same PDF you asked questions of is the one that quizzes you. No re-uploading, no " +
-      "copying files around.",
+    body: "The PDF you asked questions of is the one that quizzes you. No re-uploading.",
   },
 ];
 
@@ -118,8 +127,42 @@ const FAQ = [
   ],
 ];
 
+/* A soft light that follows the pointer across a card. */
+function spotlight(e) {
+  const r = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+  e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+}
+
+/* Fades sections in as they scroll into view. Anything already on screen, or
+   every section when the browser can't observe or the reader prefers less
+   motion, is shown straight away. */
+function useScrollReveal(root) {
+  useEffect(() => {
+    const items = root.current?.querySelectorAll("[data-reveal]") ?? [];
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (still || !("IntersectionObserver" in window)) {
+      items.forEach((el) => el.classList.add("is-shown"));
+      return undefined;
+    }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-shown");
+          io.unobserve(entry.target);
+        }
+      }),
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.12 },
+    );
+    items.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [root]);
+}
+
 export default function Hub() {
   const { hash } = useLocation();
+  const page = useRef(null);
+  useScrollReveal(page);
 
   // Nav links like /#how land here; the browser won't scroll to them by itself
   // because the sections only exist once this page has rendered.
@@ -129,7 +172,7 @@ export default function Hub() {
 
   return (
     <>
-      <div className="page hub">
+      <div className="page hub" ref={page}>
         <section className="hero">
           <div className="hero-copy">
             <span className="pill-label rise">
@@ -162,69 +205,131 @@ export default function Hub() {
           <HeroArt />
         </section>
 
-        <section className="works-with">
+        <section className="works-with" data-reveal>
           <p>Works with any text-based PDF</p>
-          <ul>
-            {WORKS_WITH.map(([icon, label]) => (
-              <li key={label}><Icon name={icon} size={22} />{label}</li>
-            ))}
-          </ul>
+          {/* Two copies, so the strip can loop without a seam. */}
+          <div className="marquee">
+            <ul>
+              {[...WORKS_WITH, ...WORKS_WITH].map(([icon, label], i) => (
+                <li key={i} aria-hidden={i >= WORKS_WITH.length}><Icon name={icon} size={22} />{label}</li>
+              ))}
+            </ul>
+          </div>
         </section>
 
-        <section id="features" className="center-section">
+        <section id="features" className="center-section glow-l" data-reveal>
           <span className="pill-label"><Icon name="sparkle" size={14} /> Why Ask &amp; Ace?</span>
+          <h2 className="section-title">
+            Everything your PDF <span className="title-accent">could never do</span>.
+          </h2>
+          <p className="section-lede">
+            One upload turns a file you scroll into a study partner that answers, cites and tests.
+          </p>
           <div className="why-grid">
-            {WHY.map(([icon, title, text]) => (
-              <article className="why-card" key={title}>
+            {WHY.map(([icon, visual, title, text]) => (
+              <article className="why-card" key={title} onMouseMove={spotlight}>
                 <span className="orb-icon"><Icon name={icon} size={26} /></span>
                 <h3>{title}</h3>
                 <p>{text}</p>
+                <WhyVisual kind={visual} />
               </article>
             ))}
           </div>
         </section>
 
-        <section id="how" className="center-section">
-          <span className="pill-label"><Icon name="sparkle" size={14} /> Simple. Fast. Powerful.</span>
-          <h2 className="section-title">How It Works</h2>
-          <ol className="steps">
-            {STEPS.map(([icon, title, text], i) => (
-              <li className="step" key={title}>
-                <span className="step-ring"><Icon name={icon} size={30} /></span>
-                <span className="step-num">{i + 1}</span>
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </li>
-            ))}
-          </ol>
+        <section className="showcase" data-reveal>
+          <div className="show-row">
+            <div className="show-copy">
+              <span className="pill-label"><Icon name="chat" size={14} /> Ask your PDF</span>
+              <h2>
+                Answers you can <span className="title-accent">check</span>, not just trust.
+              </h2>
+              <p>
+                Ask a question the way you&apos;d ask a tutor. The answer comes from your own
+                pages, with numbered citations that open the exact passage it used.
+              </p>
+              <ul className="show-points">
+                <li><Icon name="checkCircle" size={18} />Plain-language questions, not keywords</li>
+                <li><Icon name="checkCircle" size={18} />Every answer numbered back to its page</li>
+                <li><Icon name="checkCircle" size={18} />Says so when the answer isn&apos;t there</li>
+              </ul>
+              <Link className="primary" to="/documents">
+                Ask your PDF <Icon name="arrowRight" size={17} />
+              </Link>
+            </div>
+            <AskShowcase />
+          </div>
+
+          <div className="show-row flip">
+            <div className="show-copy">
+              <span className="pill-label"><Icon name="target" size={14} /> Ace your exam</span>
+              <h2>
+                A practice test, <span className="title-accent">marked in seconds</span>.
+              </h2>
+              <p>
+                Pick a question type and difficulty. It writes a test from across the whole
+                document, marks your attempt, and sends every miss back to the page to reread.
+              </p>
+              <ul className="show-points">
+                <li><Icon name="checkCircle" size={18} />5 to 30 questions, easy to hard</li>
+                <li><Icon name="checkCircle" size={18} />Answer key stays hidden until you submit</li>
+                <li><Icon name="checkCircle" size={18} />Your best score kept for every test</li>
+              </ul>
+              <Link className="btn-outline" to="/exams">
+                Ace your exam <Icon name="arrowRight" size={17} />
+              </Link>
+            </div>
+            <AceShowcase />
+          </div>
         </section>
 
-        <section id="trust" className="center-section">
+        <section id="how" className="center-section how" data-reveal>
+          <span className="pill-label"><Icon name="sparkle" size={14} /> Simple. Fast. Powerful.</span>
+          <h2 className="section-title">How It Works</h2>
+          <p className="section-lede">From a silent file to a marked practice test in four steps.</p>
+          <div className="how-panel">
+            <span className="how-line" aria-hidden="true" />
+            <ol className="steps">
+              {STEPS.map(([icon, title, text], i) => (
+                <li className="step" key={title}>
+                  <span className="step-ring"><Icon name={icon} size={30} /></span>
+                  <span className="step-num">{i + 1}</span>
+                  <h3>{title}</h3>
+                  <p>{text}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <section className="stats" data-reveal>
+          {STATS.map(([value, label]) => (
+            <div className="stat" key={label}>
+              <strong>{value}</strong>
+              <span>{label}</span>
+            </div>
+          ))}
+        </section>
+
+        <section id="trust" className="center-section glow-r" data-reveal>
           <span className="pill-label"><Icon name="shield" size={14} /> Why You Can Trust It</span>
           <h2 className="section-title">
             Smart, but never <span className="title-accent">making things up</span>.
           </h2>
           <div className="bento">
             {TRUST.map((f) => (
-              <article className={f.wide ? "bento-card span-2" : "bento-card"} key={f.title}>
+              <article className={f.wide ? "bento-card span-2" : "bento-card"} key={f.title}
+                       onMouseMove={spotlight}>
                 <span className="bento-icon"><Icon name={f.icon} size={21} /></span>
                 <h3>{f.title}</h3>
                 <p>{f.body}</p>
-                {f.wide && (
-                  <div className="bento-demo" aria-hidden="true">
-                    <b>1</b>
-                    <span className="chip-page">water_cycle.pdf · page 3</span>
-                    <b>2</b>
-                    <span className="chip-page">water_cycle.pdf · page 1</span>
-                    <span>← what a citation opens</span>
-                  </div>
-                )}
+                <TrustVisual kind={f.visual} />
               </article>
             ))}
           </div>
         </section>
 
-        <section id="pricing" className="center-section">
+        <section id="pricing" className="center-section glow-l" data-reveal>
           <span className="pill-label"><Icon name="creditCard" size={14} /> Pricing</span>
           <h2 className="section-title">
             Simple pricing: <span className="title-accent">free</span>.
@@ -255,12 +360,13 @@ export default function Hub() {
           </div>
         </section>
 
-        <section id="about" className="center-section">
+        <section id="about" className="center-section" data-reveal>
           <span className="pill-label"><Icon name="user" size={14} /> About</span>
           <h2 className="section-title">
             Built by a student, <span className="title-accent">for students</span>.
           </h2>
           <div className="about-card">
+            <span className="about-mark" aria-hidden="true">AV</span>
             <p>
               Ask &amp; Ace is a personal project by <strong>Ankit Verma</strong>. It started from a
               simple frustration: a PDF of notes can&apos;t tell you what&apos;s in it, and
@@ -273,9 +379,16 @@ export default function Hub() {
           </div>
         </section>
 
-        <section id="faq" className="center-section">
-          <span className="pill-label"><Icon name="help" size={14} /> Questions</span>
-          <h2 className="section-title">Before You Bring a PDF to Life</h2>
+        <section id="faq" className="faq-section" data-reveal>
+          <div className="faq-intro">
+            <span className="pill-label"><Icon name="help" size={14} /> Questions</span>
+            <h2 className="section-title">Before You Bring a PDF to Life</h2>
+            <p className="section-lede">The things people ask first. Still curious? It&apos;s all open.</p>
+            <div className="faq-links">
+              <a href={`${API_BASE}/docs`}><Icon name="book" size={18} />API documentation</a>
+              <a href={REPO}><Icon name="github" size={18} />Source code</a>
+            </div>
+          </div>
           <div className="faq">
             {FAQ.map(([q, a]) => (
               <details key={q}>
@@ -289,7 +402,7 @@ export default function Hub() {
           </div>
         </section>
 
-        <section className="cta-band">
+        <section className="cta-band" data-reveal>
           <div className="cta-copy">
             <h2>Ready to bring your PDF to life?</h2>
             <p>Upload one file. Ask it anything. Then let it make sure you know it.</p>
@@ -308,143 +421,5 @@ export default function Hub() {
       </div>
       <SiteFooter />
     </>
-  );
-}
-
-/* The product, pictured: the PDF itself floating in front of the workspace
-   that is reading it. Decorative — every claim it makes is also made in words
-   on this page — so it is hidden from screen readers. The figures are an
-   illustration of one document, kept inside the app's real limits. */
-function HeroArt() {
-  return (
-    <div className="hero-art rise d2" aria-hidden="true">
-      <span className="orbit" />
-      <span className="spark s1">✦</span>
-      <span className="spark s2">✦</span>
-      <span className="spark s3">✦</span>
-
-      <div className="dash">
-        <div className="dash-top">
-          <span className="dash-home"><Icon name="home" size={16} /></span>
-          <strong>AI Workspace</strong>
-          <span className="dash-avatar"><Icon name="user" size={16} /></span>
-        </div>
-        <div className="dash-body">
-          <ul className="dash-nav">
-            <li className="on"><Icon name="grid" size={15} />Dashboard</li>
-            <li><Icon name="chat" size={15} />Ask your PDF</li>
-            <li><Icon name="file" size={15} />My Exams</li>
-            <li><Icon name="upload" size={15} />Uploads</li>
-            <li><Icon name="chart" size={15} />Results</li>
-            <li><Icon name="settings" size={15} />Settings</li>
-          </ul>
-
-          <div className="dash-main">
-            <p className="dash-label">Reading Document</p>
-            <div className="dash-file">
-              <span className="dash-file-icon"><Icon name="fileText" size={18} /></span>
-              <div className="dash-file-name">
-                <b>Biology Chapter 4.pdf</b>
-                <small>2.4 MB · 143 pages</small>
-              </div>
-              <div className="dash-progress"><i /></div>
-              <em>78%</em>
-            </div>
-
-            <div className="dash-stats">
-              <div><small>Pages Read</small><b className="c-amber">112</b></div>
-              <div><small>Passages Indexed</small><b className="c-cyan">211</b></div>
-              <div><small>Questions Written</small><b className="c-blue">30</b></div>
-            </div>
-
-            <div className="dash-row">
-              <div className="dash-panel">
-                <small>Difficulty Mix</small>
-                <div className="donut-wrap">
-                  <span className="donut" />
-                  <ul className="legend">
-                    <li><i className="k-easy" /><span>Easy</span><b>30% <small>(9)</small></b></li>
-                    <li><i className="k-med" /><span>Medium</span><b>50% <small>(15)</small></b></li>
-                    <li><i className="k-hard" /><span>Hard</span><b>20% <small>(6)</small></b></li>
-                  </ul>
-                </div>
-              </div>
-              <div className="dash-panel">
-                <small>Question Types</small>
-                <ul className="qtypes">
-                  <li>MCQ <b>18</b></li>
-                  <li>True / False <b>6</b></li>
-                  <li>Short Answer <b>6</b></li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="dash-cta">
-              <Icon name="sparkle" size={15} /> Generate Exam Now <Icon name="arrowRight" size={15} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* The PDF itself, waking up: a pale page, a red PDF tag, a voice meter
-          that pulses, and the cited lines lit up in blue. */}
-      <div className="mock-pdf">
-        <div className="pdf-tag">PDF</div>
-        <div className="pdf-voice"><i /><i /><i /><i /></div>
-        <div className="pdf-title" />
-        <div className="pdf-line" />
-        <div className="pdf-line short" />
-        <div className="pdf-line lit" />
-        <div className="pdf-line lit short" />
-        <div className="pdf-line" />
-        <div className="pdf-line" />
-        <div className="pdf-line short" />
-        <div className="pdf-page">page 3</div>
-      </div>
-
-      <div className="cite-toast">
-        <span><Icon name="checkCircle" size={16} /></span>
-        <div>
-          <b>Answer found</b>
-          <small>Biology Chapter 4.pdf · page 3</small>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* Books and a mortarboard for the closing band, drawn rather than imported. */
-function BooksArt() {
-  return (
-    <svg className="books-art" viewBox="0 0 220 170" aria-hidden="true">
-      <defs>
-        <linearGradient id="bk1" x1="0" x2="1">
-          <stop offset="0" stopColor="#4f46e5" />
-          <stop offset="1" stopColor="#a855f7" />
-        </linearGradient>
-        <linearGradient id="bk2" x1="0" x2="1">
-          <stop offset="0" stopColor="#2563eb" />
-          <stop offset="1" stopColor="#7c3aed" />
-        </linearGradient>
-        <linearGradient id="cap" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="#312e81" />
-          <stop offset="1" stopColor="#1e1b4b" />
-        </linearGradient>
-        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="9" />
-        </filter>
-      </defs>
-      <ellipse cx="110" cy="150" rx="90" ry="14" fill="#7c3aed" opacity="0.55" filter="url(#glow)" />
-      <rect x="28" y="118" width="164" height="30" rx="7" fill="url(#bk1)" />
-      <rect x="34" y="124" width="140" height="6" rx="3" fill="#e9d5ff" opacity="0.65" />
-      <rect x="40" y="90" width="148" height="28" rx="7" fill="url(#bk2)" />
-      <rect x="46" y="96" width="126" height="5" rx="2.5" fill="#dbeafe" opacity="0.6" />
-      <rect x="50" y="64" width="132" height="26" rx="7" fill="url(#bk1)" />
-      <rect x="56" y="70" width="112" height="5" rx="2.5" fill="#f3e8ff" opacity="0.6" />
-      <path d="M78 52v14c0 7 64 7 64 0V52" fill="url(#cap)" />
-      <path d="M110 18 176 44 110 70 44 44z" fill="#3730a3" stroke="#818cf8" strokeWidth="1.5" />
-      <path d="M110 44 158 52v26" fill="none" stroke="#c4b5fd" strokeWidth="2" />
-      <circle cx="158" cy="82" r="4" fill="#c4b5fd" />
-    </svg>
   );
 }
